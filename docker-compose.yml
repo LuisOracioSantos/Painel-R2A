@@ -1,0 +1,17 @@
+services:
+  meu-painel:
+    build: .
+    container_name: painel-r2a
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_ENV: producao
+      FLASK_DEBUG: "False"
+      SESSION_COOKIE_SECURE: "False"
+      DATABASE_URL: sqlite:////app/instance/meu_painel.sqlite3
+    ports:
+      - "8095:8095"
+    volumes:
+      - ./instance:/app/instance
+      - ./static/uploads:/app/static/uploads

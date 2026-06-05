@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block titulo %}Pagina nao encontrada | {{ nome_sistema }}{% endblock %}
+
+{% block conteudo %}
+<section class="estado-erro" aria-labelledby="titulo-erro">
+    <p class="rotulo-secao">Erro 404</p>
+    <h1 id="titulo-erro">Pagina nao encontrada</h1>
+    <p>A rota acessada nao existe ou ainda nao foi registrada no painel.</p>
+    <a class="botao-link" href="{{ url_for('painel_principal.exibir_painel') }}">Voltar ao painel</a>
+</section>
+{% endblock %}

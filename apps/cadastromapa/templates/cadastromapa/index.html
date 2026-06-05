@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina }} | {{ nome_sistema }}{% endblock %}
+
+{% block estilos %}
+<link rel="stylesheet" href="{{ url_for('cadastromapa.static', filename='css/cadastromapa.css') }}">
+{% endblock %}
+
+{% block classe_conteudo %}conteudo-cadastromapa{% endblock %}
+
+{% block conteudo %}
+<section class="cabecalho-pagina" aria-labelledby="titulo-cadastro-mapa">
+    <div>
+        <h1 id="titulo-cadastro-mapa">Mapa de Cadastro</h1>
+    </div>
+</section>
+
+<section class="cadastro-mapa">
+    <form id="formPDF" class="painel-formulario cadastro-mapa-upload" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+        <div>
+            <label for="pdfFile">Selecionar PDF</label>
+            <input type="file" id="pdfFile" name="pdf" accept="application/pdf" required>
+        </div>
+
+        <button class="botao-primario" type="submit">Ler PDF</button>
+    </form>
+
+    <form class="painel-formulario cadastro-mapa-formulario">
+        <div class="grade-formulario-tripla">
+            <div>
+                <label for="leilao">Leilão</label>
+                <input type="text" name="leilao" id="leilao" maxlength="80" required>
+                <small id="msgLeilao" class="mensagem-campo oculto">
+                    A descrição do leilão ultrapassou 50 caracteres.
+                </small>
+            </div>
+            <div>
+                <label for="datacontrato">Data Contrato</label>
+                <input type="text" id="datacontrato" name="datacontrato" required>
+            </div>
+            <div>
+                <label for="produto">Produto</label>
+                <input type="text" id="produto" name="produto" required value="Duplicata">
+            </div>
+        </div>
+
+        <div class="grade-formulario-dupla">
+            <div>
+                <label for="vendedor">Vendedor</label>
+                <input type="text" id="vendedor" name="vendedor">
+            </div>
+            <div>
+                <label for="comprador">Comprador</label>
+                <input type="text" id="comprador" name="comprador" required>
+            </div>
+        </div>
+
+        <div class="grade-formulario-tripla">
+            <div>
+                <label for="cpfcnpj">CPF/CNPJ</label>
+                <input type="text" id="cpfcnpj" name="cpfcnpj" required>
+            </div>
+            <div>
+                <label for="telefone1">Telefone 1</label>
+                <input type="text" id="telefone1" name="telefone1">
+            </div>
+            <div>
+                <label for="telefone2">Telefone 2</label>
+                <input type="text" id="telefone2" name="telefone2">
+            </div>
+        </div>
+
+        <div class="grade-formulario-tripla">
+            <div>
+                <label for="telefone3">Telefone 3</label>
+                <input type="text" id="telefone3" name="telefone3">
+            </div>
+            <div>
+                <label for="email1">E-mail 1</label>
+                <input type="text" id="email1" name="email1">
+            </div>
+            <div>
+                <label for="email2">E-mail 2</label>
+                <input type="text" id="email2" name="email2">
+            </div>
+        </div>
+
+        <div class="grade-formulario-tripla">
+            <div>
+                <label for="email3">E-mail 3</label>
+                <input type="text" id="email3" name="email3">
+            </div>
+            <div>
+                <label for="cep">CEP</label>
+                <input type="text" id="cep" name="cep">
+            </div>
+            <div>
+                <label for="uf">UF</label>
+                <input type="text" id="uf" name="uf">
+            </div>
+        </div>
+
+        <div class="grade-formulario-dupla">
+            <div>
+                <label for="endereco">Endereço</label>
+                <input type="text" id="endereco" name="endereco">
+            </div>
+            <div class="grade-formulario-tripla">
+                <div>
+                    <label for="numero">Número</label>
+                    <input type="text" id="numero" name="numero">
+                </div>
+                <div>
+                    <label for="bairro">Bairro</label>
+                    <input type="text" id="bairro" name="bairro">
+                </div>
+                <div>
+                    <label for="cidade">Cidade</label>
+                    <input type="text" id="cidade" name="cidade">
+                </div>
+            </div>
+        </div>
+
+        <div class="grade-formulario-dupla">
+            <div>
+                <label for="complemento">Complemento</label>
+                <input type="text" id="complemento" name="complemento">
+            </div>
+            <div>
+                <label for="observacao">Observação</label>
+                <input type="text" id="observacao" name="observacao" required>
+                <small id="msgObservacao" class="mensagem-campo oculto">
+                    Informe a numeração do(s) lote(s).
+                </small>
+            </div>
+        </div>
+
+        <div class="barra-navegacao-paginas">
+            <button class="botao-secundario" type="button" data-acao="pagina-anterior">Anterior</button>
+            <span id="paginaAtual">Nenhum PDF carregado</span>
+            <button class="botao-secundario" type="button" data-acao="proxima-pagina">Próxima</button>
+        </div>
+
+        <div class="tabela-admin" role="region" aria-label="Vencimentos" tabindex="0">
+            <table id="tabelaVencimentos">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="checkTodos"></th>
+                        <th>Número Parcela</th>
+                        <th>Vencimento</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyParcelas"></tbody>
+            </table>
+        </div>
+
+        <button class="botao-primario" type="button" data-acao="exportar-excel">Exportar Excel</button>
+    </form>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.CADASTRO_MAPA_CONFIG = {
+        importarUrl: "{{ url_for('cadastromapa.importar_cadastro_mapa_cliente') }}",
+        exportarUrl: "{{ url_for('cadastromapa.exportar_excel') }}",
+        csrfToken: "{{ csrf_token() }}"
+    };
+</script>
+<script src="{{ url_for('cadastromapa.static', filename='js/cadastromapa.js') }}"></script>
+{% endblock %}

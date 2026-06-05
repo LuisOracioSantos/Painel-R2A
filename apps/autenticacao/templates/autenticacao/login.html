@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina }} | {{ nome_sistema }}{% endblock %}
+
+{% block estilos %}
+<link rel="stylesheet" href="{{ url_for('autenticacao.static', filename='css/autenticacao.css') }}">
+{% endblock %}
+
+{% block conteudo %}
+<section class="login-area" aria-labelledby="titulo-login">
+    <div class="login-painel">
+        {% if logo_empresa_url %}
+        <img class="logo-login" src="{{ logo_empresa_url }}" alt="Logo da empresa">
+        {% endif %}
+
+        <form class="formulario" action="{{ url_for('autenticacao.autenticar_usuario', next=request.args.get('next')) }}" method="post">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+            <label for="email">E-mail</label>
+            <input id="email" name="email" type="email" autocomplete="email" required>
+
+            <label for="senha">Senha</label>
+            <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+
+            <label class="campo-checkbox">
+                <input name="lembrar" type="checkbox">
+                <span>Manter conectado</span>
+            </label>
+
+            <button class="botao-primario" type="submit">Entrar</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

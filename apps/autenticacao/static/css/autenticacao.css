@@ -1,0 +1,61 @@
+.login-area {
+    display: grid;
+    place-items: center;
+    min-height: calc(100vh - 180px);
+}
+
+.login-painel {
+    width: min(460px, 100%);
+    padding: 30px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra-suave);
+}
+
+.logo-login {
+    display: block;
+    max-width: min(260px, 100%);
+    max-height: 96px;
+    margin: 0 auto 24px;
+    object-fit: contain;
+}
+
+.login-painel h1 {
+    margin: 8px 0 10px;
+    font-size: 2rem;
+}
+
+.formulario {
+    display: grid;
+    gap: 12px;
+}
+
+.formulario label {
+    color: var(--cor-texto);
+    font-weight: 700;
+}
+
+.formulario input {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio);
+    padding: 9px 11px;
+    background: #ffffff;
+    color: var(--cor-texto);
+    font: inherit;
+}
+
+.campo-checkbox {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    color: var(--cor-texto);
+    font-weight: 600;
+}
+
+.campo-checkbox input {
+    width: 18px;
+    height: 18px;
+}

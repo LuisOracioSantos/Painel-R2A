@@ -1,0 +1,216 @@
+﻿{% extends "cadastrocomissao_base.html" %}
+
+{% block title %}Compradores | Leitor PDF para Excel{% endblock %}
+
+{% block content %}
+{% set has_buyers = extraction.buyers|length > 0 %}
+<section class="review-page">
+  <div class="review-header">
+    <div>
+      <span class="eyebrow">Arquivo analisado</span>
+      <h1 class="h4 fw-semibold mb-1">{{ extraction.metadata.filename }}</h1>
+      <p class="text-secondary mb-0">
+        {{ extraction.metadata.pages }} pagina(s), {{ extraction.quality.buyers }} comprador(es) detectado(s).
+        {% if extraction.metadata.commission_filename %}
+          Comissoes: {{ extraction.metadata.commission_filename }}.
+        {% endif %}
+      </p>
+    </div>
+    <div class="review-actions">
+      <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('cadastrocomissao.index') }}">Voltar</a>
+      <form action="{{ url_for('cadastrocomissao.clear_extraction', extraction_id=extraction_id) }}" method="post">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-outline-danger btn-lg" type="submit">Limpar dados</button>
+      </form>
+      <form id="exportForm" action="{{ url_for('cadastrocomissao.export_excel') }}" method="post">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="extraction_id" value="{{ extraction_id }}">
+        <input type="hidden" name="selection_payload" id="selectionPayload">
+        <label class="export-filter-option">
+          <input class="form-check-input" type="checkbox" id="excludeMissingDocument" checked>
+          <span>Nao exportar sem CPF/CNPJ</span>
+        </label>
+        <button class="btn btn-success btn-lg" type="submit" {% if not has_buyers %}disabled{% endif %}>Exportar Excel</button>
+      </form>
+    </div>
+  </div>
+
+  {% if extraction.quality.notes %}
+    <div class="alert alert-info py-2 mb-3">
+      {% for note in extraction.quality.notes %}
+        <div>{{ note }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <ul class="nav nav-tabs review-tabs" id="reviewTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="buyers-tab" data-bs-toggle="tab" data-bs-target="#buyers" type="button" role="tab">Compradores</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="text-tab" data-bs-toggle="tab" data-bs-target="#text" type="button" role="tab">Texto</button>
+    </li>
+  </ul>
+
+  <div class="tab-content review-surface border border-top-0">
+    <section class="tab-pane fade show active review-pane" id="buyers" role="tabpanel" aria-labelledby="buyers-tab" tabindex="0">
+      {% if has_buyers %}
+        {% for table in extraction.tables %}
+          {% if table.id == "buyers" %}
+            {% set visible_headers = table.headers|reject("in", ["Tipo Documento", "CPF", "CNPJ", "Inscricao Estadual", "Codigo Estabelecimento", "Pagina", "Telefones", "Emails", "Endereco Fazenda", "Cidade Fazenda", "UF Fazenda"])|list %}
+            {% set long_auction = namespace(count=0) %}
+            {% for row in table.rows %}
+              {% if row.get("Leilao", "")|string|length > 50 %}
+                {% set long_auction.count = long_auction.count + 1 %}
+              {% endif %}
+            {% endfor %}
+            <div class="buyer-summary">
+              <div>
+                <h2 class="h5 fw-semibold mb-1">Compradores</h2>
+                <p class="text-secondary mb-0">
+                  {{ table.rows|length }} linha(s), {{ visible_headers|length }} coluna(s).
+                  {% if table.missing_count %}
+                    <span class="missing-summary">{{ table.missing_count }} pendencia(s) em {{ table.missing_rows }} comprador(es).</span>
+                  {% endif %}
+                  {% if table.duplicate_rows %}
+                    <span class="duplicate-summary">{{ table.duplicate_rows }} duplicidade(s).</span>
+                  {% endif %}
+                </p>
+              </div>
+            </div>
+
+            {% if long_auction.count %}
+              <div class="alert alert-warning py-2 mb-3" id="longAuctionAlert">
+                {{ long_auction.count }} linha(s) com o campo Leilao acima de 50 caracteres. Use Editar para ajustar antes de exportar.
+              </div>
+            {% else %}
+              <div class="alert alert-warning py-2 mb-3 d-none" id="longAuctionAlert"></div>
+            {% endif %}
+
+            {% if table.duplicate_rows %}
+              <div class="alert alert-warning py-2 mb-3" id="duplicateBuyerAlert">
+                {{ table.duplicate_rows }} linha(s) com comprador duplicado.
+                {% if table.duplicate_name_value_rows %}
+                  {{ table.duplicate_name_value_rows }} tambem tem o mesmo valor.
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="alert alert-warning py-2 mb-3 d-none" id="duplicateBuyerAlert"></div>
+            {% endif %}
+
+            <div class="buyer-table-wrap" data-table-id="{{ table.id }}" data-extraction-id="{{ extraction_id }}">
+              <table class="table table-sm table-hover align-middle buyers-table mb-0">
+                <thead>
+                  <tr>
+                    <th class="actions-column">Acoes</th>
+                    {% for header in visible_headers %}
+                      <th data-column-key="{{ header }}">{{ header }}</th>
+                    {% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in table.rows %}
+                    {% set row_index = loop.index0 %}
+                    <tr data-row-index="{{ row_index }}">
+                      <td class="actions-column actions-cell">
+                        <button class="btn btn-sm btn-outline-primary edit-row-btn" type="button" data-row-index="{{ row_index }}">Editar</button>
+                      </td>
+                      {% for header in visible_headers %}
+                        {% set value = row.get(header, "") %}
+                        {% set is_missing = header in row.get("__missing_fields", []) %}
+                        {% set is_long_auction = header == "Leilao" and value|string|length > 50 %}
+                        {% set duplicate_status = row.get("__duplicate_status", "") if header == "Comprador" else "" %}
+                        <td class="small text-break {% if is_missing %}missing-cell{% elif is_long_auction %}long-cell{% elif duplicate_status == "name_value" %}duplicate-cell duplicate-name-value{% elif duplicate_status == "name" %}duplicate-cell duplicate-name{% elif not value %}empty-cell{% endif %}" data-field="{{ header }}" data-value="{{ value|e }}">
+                          {% if is_missing %}
+                            <span class="missing-badge">Pendente</span>
+                          {% elif is_long_auction %}
+                            {{ value }}
+                            <span class="length-badge">Mais de 50</span>
+                          {% elif value %}
+                            {{ value }}
+                            {% if duplicate_status == "name_value" %}
+                              <span class="duplicate-badge duplicate-badge-strong" title="{{ row.get('__duplicate_message', '') }}">! Nome e valor</span>
+                            {% elif duplicate_status == "name" %}
+                              <span class="duplicate-icon" title="{{ row.get('__duplicate_message', '') }}">!</span>
+                            {% endif %}
+                          {% else %}
+                            <span class="empty-dash">-</span>
+                          {% endif %}
+                        </td>
+                      {% endfor %}
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <h2 class="h5 fw-semibold">Nenhum comprador detectado</h2>
+          <p class="text-secondary mb-0">O PDF foi lido, mas nao foi encontrado o padrao tabular de relacao de compradores.</p>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="tab-pane fade review-pane" id="text" role="tabpanel" aria-labelledby="text-tab" tabindex="0">
+      <div class="text-pane-header">
+        <h2 class="h5 fw-semibold mb-1">Texto extraido</h2>
+        <p class="text-secondary mb-0">Conteudo por pagina para conferencia.</p>
+      </div>
+
+      <div class="accordion text-accordion" id="pagesAccordion">
+        {% for page in extraction.pages %}
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#page{{ page.number }}">
+                Pagina {{ page.number }}
+              </button>
+            </h2>
+            <div id="page{{ page.number }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" data-bs-parent="#pagesAccordion">
+              <div class="accordion-body">
+                <pre class="text-preview">{{ page.text }}</pre>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</section>
+
+<div class="modal fade" id="editBuyerModal" tabindex="-1" aria-labelledby="editBuyerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <form class="modal-content" id="editBuyerForm">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="editBuyerModalLabel">Editar comprador</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editRowIndex">
+        <div class="alert alert-warning py-2 d-none" id="editAuctionLengthAlert">
+          O campo Leilao esta acima de 50 caracteres.
+        </div>
+        <div class="form-check form-switch replicate-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="replicateSharedFields" checked>
+          <label class="form-check-label" for="replicateSharedFields">
+            Replicar Leilao, Data do Leilao e ObservaÃ§Ã£o para todas as linhas quando algum deles for alterado.
+          </label>
+        </div>
+        <div class="edit-fields-grid" id="editBuyerFields"></div>
+      </div>
+      <div class="modal-footer">
+        <span class="text-secondary small me-auto" id="editBuyerStatus"></span>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="saveBuyerRowButton">Salvar linha</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('cadastrocomissao.static', filename='js/review.js') }}"></script>
+{% endblock %}
+

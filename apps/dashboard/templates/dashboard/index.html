@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina }} | {{ nome_sistema }}{% endblock %}
+
+{% block estilos %}
+<link rel="stylesheet" href="{{ url_for('dashboard.static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block conteudo %}
+<section class="cabecalho-pagina" aria-labelledby="titulo-dashboard">
+    <div>
+        <p class="rotulo-secao">Administracao</p>
+        {% if secao_ativa == "aplicacoes" %}
+        <h1 id="titulo-dashboard">Cat&aacute;logo de aplica&ccedil;&otilde;es</h1>
+        {% elif secao_ativa == "usuarios" %}
+        <h1 id="titulo-dashboard">Contas e Perfis</h1>
+        {% else %}
+        <h1 id="titulo-dashboard">Acesso por Usu&aacute;rio</h1>
+        {% endif %}
+        {% if secao_ativa == "aplicacoes" %}
+        <p class="texto-apoio">Cadastre, organize e controle a disponibilidade das aplicacoes do painel.</p>
+        {% elif secao_ativa == "usuarios" %}
+        <p class="texto-apoio">Crie contas, acompanhe status e defina o perfil de cada usuario.</p>
+        {% else %}
+        <p class="texto-apoio">Defina quais aplicacoes cada usuario pode acessar no painel principal.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="grade-metricas" aria-label="Resumo da secao">
+    {% for metrica in metricas %}
+    <article class="cartao-metrica">
+        <span>{{ metrica.rotulo }}</span>
+        <strong>{{ metrica.valor }}</strong>
+    </article>
+    {% endfor %}
+</section>
+
+{% if secao_ativa == "aplicacoes" %}
+<section class="secao-conteudo" aria-labelledby="titulo-logo-empresa">
+    <div class="cabecalho-secao">
+        <div>
+            <p class="rotulo-secao">Identidade visual</p>
+            <h2 id="titulo-logo-empresa">Logo da empresa</h2>
+        </div>
+    </div>
+
+    <div class="painel-logo-empresa">
+        <div class="preview-logo-empresa">
+            {% if logo_empresa_url %}
+            <img src="{{ logo_empresa_url }}" alt="Logo da empresa">
+            {% else %}
+            <span>Sem logo configurado</span>
+            {% endif %}
+        </div>
+
+        <form class="painel-formulario formulario-logo" action="{{ url_for('dashboard.atualizar_logo_empresa') }}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+            <label for="logo-empresa">Arquivo do logo</label>
+            <input id="logo-empresa" name="logo_empresa" type="file" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif" required>
+
+            <button class="botao-primario" type="submit">Salvar logo</button>
+        </form>
+
+        {% if logo_empresa_url %}
+        <form action="{{ url_for('dashboard.remover_logo') }}" method="post">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <button class="botao-tabela botao-perigo" type="submit">Remover logo</button>
+        </form>
+        {% endif %}
+    </div>
+</section>
+
+<section class="secao-conteudo" aria-labelledby="titulo-aplicacoes">
+    <div class="cabecalho-secao">
+        <div>
+            <p class="rotulo-secao">Aplicacoes</p>
+            <h2 id="titulo-aplicacoes">Cat&aacute;logo de aplica&ccedil;&otilde;es</h2>
+        </div>
+    </div>
+
+    <div class="grade-admin">
+        <form class="painel-formulario" action="{{ url_for('dashboard.criar_aplicacao') }}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <h3>Nova aplicacao</h3>
+
+            <label for="app-nome">Nome</label>
+            <input id="app-nome" name="nome" type="text" maxlength="120" required>
+
+            <label for="app-descricao">Descricao</label>
+            <textarea id="app-descricao" name="descricao" rows="3" maxlength="255"></textarea>
+
+            <div class="grade-formulario-dupla">
+                <div>
+                    <label for="app-endpoint">Endpoint interno</label>
+                    <input id="app-endpoint" name="endpoint" type="text" placeholder="ex: vendas.exibir_dashboard">
+                </div>
+                <div>
+                    <label for="app-url">URL externa</label>
+                    <input id="app-url" name="url_externa" type="url" placeholder="https://">
+                </div>
+            </div>
+
+            <div class="grade-formulario-tripla">
+                <div>
+                    <label for="app-icone">Icone</label>
+                    <input id="app-icone" name="icone" type="text" maxlength="8" value="APP">
+                </div>
+                <div>
+                    <label for="app-cor">Cor</label>
+                    <input id="app-cor" name="cor" type="color" value="#176b87">
+                </div>
+                <div>
+                    <label for="app-ordem">Ordem</label>
+                    <input id="app-ordem" name="ordem" type="number" value="100" min="1">
+                </div>
+            </div>
+
+            <label for="app-imagem-icone">Imagem do icone</label>
+            <input id="app-imagem-icone" name="imagem_icone" type="file" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif">
+
+            <label class="campo-checkbox">
+                <input name="ativa" type="checkbox" checked>
+                <span>Aplicacao ativa</span>
+            </label>
+
+            <button class="botao-primario" type="submit">Adicionar aplicacao</button>
+        </form>
+
+        <div class="tabela-admin" role="region" aria-label="Aplicacoes cadastradas" tabindex="0">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aplicacao</th>
+                        <th>Destino</th>
+                        <th>Status</th>
+                        <th>Acao</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for aplicativo in aplicativos %}
+                    <tr>
+                        <td>
+                            <span class="mini-icone" style="--cor-aplicacao: {{ aplicativo.cor }};">
+                                {% if aplicativo.imagem_icone %}
+                                <img src="{{ url_for('static', filename=aplicativo.imagem_icone) }}" alt="">
+                                {% else %}
+                                {{ aplicativo.icone }}
+                                {% endif %}
+                            </span>
+                            <strong>{{ aplicativo.nome }}</strong>
+                        </td>
+                        <td>{{ aplicativo.destino_configurado }}</td>
+                        <td>
+                            <span class="selo-status {{ 'selo-inativo' if not aplicativo.ativa else '' }}">
+                                {{ 'Ativa' if aplicativo.ativa else 'Inativa' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="acoes-tabela">
+                                <form action="{{ url_for('dashboard.alternar_status_aplicacao', aplicacao_id=aplicativo.id) }}" method="post">
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                    <button class="botao-tabela" type="submit">
+                                        {{ 'Inativar' if aplicativo.ativa else 'Ativar' }}
+                                    </button>
+                                </form>
+                                <a class="botao-tabela" href="#editar-aplicacao-{{ aplicativo.id }}">Editar</a>
+                                <form
+                                    action="{{ url_for('dashboard.excluir_aplicacao', aplicacao_id=aplicativo.id) }}"
+                                    method="post"
+                                    onsubmit="return confirm('Excluir esta aplicacao e remover seus acessos vinculados?')"
+                                >
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                    <button class="botao-tabela botao-perigo" type="submit">Excluir</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr id="editar-aplicacao-{{ aplicativo.id }}" class="linha-edicao-aplicacao">
+                        <td colspan="4">
+                            <form class="painel-formulario formulario-edicao-aplicacao" action="{{ url_for('dashboard.editar_aplicacao', aplicacao_id=aplicativo.id) }}" method="post" enctype="multipart/form-data">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                <h3>Editar {{ aplicativo.nome }}</h3>
+
+                                <div class="grade-formulario-dupla">
+                                    <div>
+                                        <label for="editar-nome-{{ aplicativo.id }}">Nome</label>
+                                        <input id="editar-nome-{{ aplicativo.id }}" name="nome" type="text" maxlength="120" value="{{ aplicativo.nome }}" required>
+                                    </div>
+                                    <div>
+                                        <label for="editar-ordem-{{ aplicativo.id }}">Ordem</label>
+                                        <input id="editar-ordem-{{ aplicativo.id }}" name="ordem" type="number" min="1" value="{{ aplicativo.ordem }}">
+                                    </div>
+                                </div>
+
+                                <label for="editar-descricao-{{ aplicativo.id }}">Descricao</label>
+                                <textarea id="editar-descricao-{{ aplicativo.id }}" name="descricao" rows="2" maxlength="255">{{ aplicativo.descricao or '' }}</textarea>
+
+                                <div class="grade-formulario-dupla">
+                                    <div>
+                                        <label for="editar-endpoint-{{ aplicativo.id }}">Endpoint interno</label>
+                                        <input id="editar-endpoint-{{ aplicativo.id }}" name="endpoint" type="text" value="{{ aplicativo.endpoint or '' }}">
+                                    </div>
+                                    <div>
+                                        <label for="editar-url-{{ aplicativo.id }}">URL externa</label>
+                                        <input id="editar-url-{{ aplicativo.id }}" name="url_externa" type="url" value="{{ aplicativo.url_externa or '' }}">
+                                    </div>
+                                </div>
+
+                                <div class="grade-formulario-tripla">
+                                    <div>
+                                        <label for="editar-icone-{{ aplicativo.id }}">Icone escrito</label>
+                                        <input id="editar-icone-{{ aplicativo.id }}" name="icone" type="text" maxlength="8" value="{{ aplicativo.icone }}">
+                                    </div>
+                                    <div>
+                                        <label for="editar-cor-{{ aplicativo.id }}">Cor</label>
+                                        <input id="editar-cor-{{ aplicativo.id }}" name="cor" type="color" value="{{ aplicativo.cor }}">
+                                    </div>
+                                    <div>
+                                        <label for="editar-imagem-{{ aplicativo.id }}">Imagem do icone</label>
+                                        <input id="editar-imagem-{{ aplicativo.id }}" name="imagem_icone" type="file" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif">
+                                    </div>
+                                </div>
+
+                                <label class="campo-checkbox">
+                                    <input name="ativa" type="checkbox" {{ 'checked' if aplicativo.ativa else '' }}>
+                                    <span>Aplicacao ativa</span>
+                                </label>
+
+                                <div class="acoes-tabela">
+                                    <button class="botao-primario" type="submit">Salvar alteracoes</button>
+                                    {% if aplicativo.imagem_icone %}
+                                    <button class="botao-tabela botao-perigo" type="submit" form="remover-icone-{{ aplicativo.id }}">Remover imagem</button>
+                                    {% endif %}
+                                </div>
+                            </form>
+                            {% if aplicativo.imagem_icone %}
+                            <form id="remover-icone-{{ aplicativo.id }}" action="{{ url_for('dashboard.remover_icone', aplicacao_id=aplicativo.id) }}" method="post">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4">Nenhuma aplicacao cadastrada.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if secao_ativa == "usuarios" %}
+<section class="secao-conteudo" aria-labelledby="titulo-usuarios">
+    <div class="cabecalho-secao">
+        <div>
+            <p class="rotulo-secao">Usuarios</p>
+            <h2 id="titulo-usuarios">Contas e Perfis</h2>
+        </div>
+    </div>
+
+    <div class="grade-admin">
+        <form class="painel-formulario" action="{{ url_for('dashboard.criar_usuario') }}" method="post">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <h3>Novo usuario</h3>
+
+            <label for="usuario-nome">Nome</label>
+            <input id="usuario-nome" name="nome" type="text" maxlength="120" required>
+
+            <label for="usuario-email">E-mail</label>
+            <input id="usuario-email" name="email" type="email" maxlength="255" required>
+
+            <label for="usuario-senha">Senha inicial</label>
+            <input id="usuario-senha" name="senha" type="password" minlength="8" required>
+
+            <label for="usuario-perfil">Perfil</label>
+            <select id="usuario-perfil" name="perfil">
+                <option value="usuario">Usuario</option>
+                <option value="admin">Admin</option>
+            </select>
+
+            <button class="botao-primario" type="submit">Criar usuario</button>
+        </form>
+
+        <div class="tabela-admin" role="region" aria-label="Usuarios cadastrados" tabindex="0">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Perfil</th>
+                        <th>Status</th>
+                        <th>Acao</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td>
+                            <strong>{{ usuario.nome }}</strong>
+                            <small>{{ usuario.email }}</small>
+                        </td>
+                        <td>{{ usuario.perfil }}</td>
+                        <td>
+                            <span class="selo-status {{ 'selo-inativo' if not usuario.ativo else '' }}">
+                                {{ 'Ativo' if usuario.ativo else 'Inativo' }}
+                            </span>
+                        </td>
+                        <td>
+                            <form action="{{ url_for('dashboard.alternar_status_usuario', usuario_id=usuario.id) }}" method="post">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                <button class="botao-tabela" type="submit" {{ 'disabled' if usuario.id == current_user.id else '' }}>
+                                    {{ 'Inativar' if usuario.ativo else 'Ativar' }}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4">Nenhum usuario cadastrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if secao_ativa == "acessos" %}
+<section class="secao-conteudo" aria-labelledby="titulo-acessos">
+    <div class="cabecalho-secao">
+        <div>
+            <p class="rotulo-secao">Permissoes</p>
+            <h2 id="titulo-acessos">Acesso por Usu&aacute;rio</h2>
+        </div>
+    </div>
+
+    <div class="grade-permissoes">
+        {% for usuario in usuarios %}
+        <form class="cartao-permissao" action="{{ url_for('dashboard.atualizar_acessos_usuario') }}" method="post">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="usuario_id" value="{{ usuario.id }}">
+
+            <div>
+                <h3>{{ usuario.nome }}</h3>
+                <p>{{ usuario.email }}</p>
+            </div>
+
+            <div class="lista-checkboxes">
+                {% for aplicativo in aplicativos %}
+                <label class="campo-checkbox">
+                    <input
+                        name="aplicacoes_ids"
+                        type="checkbox"
+                        value="{{ aplicativo.id }}"
+                        {{ 'checked' if aplicativo in usuario.aplicacoes else '' }}
+                    >
+                    <span>{{ aplicativo.nome }}</span>
+                </label>
+                {% else %}
+                <p class="texto-apoio">Nenhuma aplicacao cadastrada.</p>
+                {% endfor %}
+            </div>
+
+            <button class="botao-secundario" type="submit">Salvar acessos</button>
+        </form>
+        {% else %}
+        <section class="secao-vazia" aria-labelledby="titulo-sem-usuarios">
+            <p class="rotulo-secao">Sem usuarios</p>
+            <h2 id="titulo-sem-usuarios">Nenhum usuario cadastrado</h2>
+        </section>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

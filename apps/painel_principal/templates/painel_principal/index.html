@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina }} | {{ nome_sistema }}{% endblock %}
+
+{% block estilos %}
+<link rel="stylesheet" href="{{ url_for('painel_principal.static', filename='css/painel_principal.css') }}">
+{% endblock %}
+
+{% block conteudo %}
+<section class="cabecalho-pagina" aria-labelledby="titulo-painel-principal">
+    <div>
+        <p class="rotulo-secao">Painel principal</p>
+
+    </div>
+</section>
+
+{% if aplicativos %}
+<section class="grade-painel-principal" aria-label="Aplicações disponíveis">
+    {% for aplicativo in aplicativos %}
+    <a class="atalho-aplicacao" href="{{ aplicativo.url }}">
+        <span class="icone-quadrado" style="--cor-aplicacao: {{ aplicativo.cor }};">
+            {% if aplicativo.imagem_icone %}
+            <img src="{{ url_for('static', filename=aplicativo.imagem_icone) }}" alt="">
+            {% else %}
+            {{ aplicativo.icone }}
+            {% endif %}
+        </span>
+        <strong>{{ aplicativo.nome }}</strong>
+        {% if aplicativo.descricao %}
+        <small>{{ aplicativo.descricao }}</small>
+        {% endif %}
+    </a>
+    {% endfor %}
+</section>
+{% else %}
+<section class="secao-vazia" aria-labelledby="titulo-sem-aplicacoes">
+    <p class="rotulo-secao">Sem acessos</p>
+    <h2 id="titulo-sem-aplicacoes">Nenhuma aplicação liberada</h2>
+    <p>Um administrador precisa vincular aplicações ao seu usuário.</p>
+</section>
+{% endif %}
+{% endblock %}

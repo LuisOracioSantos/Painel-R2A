@@ -1,0 +1,325 @@
+.grade-metricas {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.cartao-metrica,
+.painel-formulario,
+.cartao-permissao {
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra-suave);
+}
+
+.cartao-metrica {
+    display: grid;
+    gap: 10px;
+    padding: 22px;
+}
+
+.cartao-metrica span,
+.cartao-permissao p {
+    color: var(--cor-texto-suave);
+}
+
+.cartao-metrica strong {
+    font-size: 2rem;
+}
+
+.secao-conteudo {
+    margin-top: 32px;
+}
+
+.painel-logo-empresa {
+    display: grid;
+    grid-template-columns: minmax(220px, 320px) minmax(320px, 1fr) auto;
+    gap: 22px;
+    align-items: center;
+    padding: 24px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra-suave);
+}
+
+.preview-logo-empresa {
+    display: grid;
+    place-items: center;
+    min-height: 118px;
+    border: 1px dashed var(--cor-borda);
+    border-radius: var(--raio);
+    color: var(--cor-texto-suave);
+    text-align: center;
+}
+
+.preview-logo-empresa img {
+    display: block;
+    max-width: 270px;
+    max-height: 104px;
+    object-fit: contain;
+}
+
+.formulario-logo {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.cabecalho-secao {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.cabecalho-secao h2 {
+    margin: 6px 0 0;
+    font-size: 1.35rem;
+}
+
+.grade-admin {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.grade-admin > .painel-formulario {
+    width: 100%;
+    justify-self: stretch;
+}
+
+.painel-formulario {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+    padding: 26px;
+}
+
+.painel-formulario label {
+    color: var(--cor-texto);
+    font-weight: 700;
+}
+
+.painel-formulario input,
+.painel-formulario textarea,
+.painel-formulario select {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio);
+    padding: 9px 11px;
+    background: #ffffff;
+    color: var(--cor-texto);
+    font: inherit;
+}
+
+.painel-formulario textarea {
+    resize: vertical;
+}
+
+.campo-checkbox {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    color: var(--cor-texto);
+    font-weight: 600;
+}
+
+.campo-checkbox input {
+    width: 18px;
+    height: 18px;
+}
+
+.grade-formulario-dupla,
+.grade-formulario-tripla {
+    display: grid;
+    gap: 16px;
+}
+
+.grade-formulario-dupla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grade-formulario-tripla {
+    grid-template-columns: 1.1fr 0.8fr 0.8fr;
+}
+
+.tabela-admin {
+    overflow-x: auto;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra-suave);
+}
+
+.tabela-admin table {
+    width: 100%;
+    min-width: 680px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.tabela-admin th,
+.tabela-admin td {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--cor-borda);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.tabela-admin th {
+    color: var(--cor-texto-suave);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+}
+
+.tabela-admin th:nth-child(1),
+.tabela-admin td:nth-child(1) {
+    width: 32%;
+}
+
+.tabela-admin th:nth-child(2),
+.tabela-admin td:nth-child(2) {
+    width: 30%;
+    overflow-wrap: anywhere;
+}
+
+.tabela-admin th:nth-child(3),
+.tabela-admin td:nth-child(3) {
+    width: 14%;
+}
+
+.tabela-admin th:nth-child(4),
+.tabela-admin td:nth-child(4) {
+    width: 24%;
+}
+
+.tabela-admin td small {
+    display: block;
+    margin-top: 4px;
+    color: var(--cor-texto-suave);
+}
+
+.tabela-admin tr:last-child td {
+    border-bottom: 0;
+}
+
+.acoes-tabela {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+}
+
+.botao-perigo {
+    background: #fff0ed;
+    color: #9a341f;
+}
+
+.botao-perigo:hover,
+.botao-perigo:focus {
+    background: #f8d8cf;
+}
+
+.mini-icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    margin-right: 12px;
+    border-radius: var(--raio);
+    background: var(--cor-aplicacao, var(--cor-primaria));
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.selo-status {
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #e8f4ed;
+    color: #1f7a4d;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.selo-inativo {
+    background: #f3edf0;
+    color: #87495f;
+}
+
+.grade-permissoes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.cartao-permissao {
+    display: grid;
+    gap: 16px;
+    padding: 20px;
+}
+
+.cartao-permissao h3 {
+    margin: 0 0 4px;
+}
+
+.cartao-permissao p {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.mini-icone img {
+    display: block;
+    max-width: 88%;
+    max-height: 88%;
+    object-fit: contain;
+}
+
+.linha-edicao-aplicacao {
+    display: none;
+}
+
+.linha-edicao-aplicacao:target {
+    display: table-row;
+}
+
+.linha-edicao-aplicacao td {
+    padding: 24px;
+    background: #f9fbfc;
+}
+
+.formulario-edicao-aplicacao {
+    width: 100%;
+    margin: 0;
+    gap: 18px;
+    padding: 26px;
+    border-style: dashed;
+    box-shadow: none;
+}
+
+.formulario-edicao-aplicacao h3 {
+    margin: 0 0 4px;
+}
+
+.lista-checkboxes {
+    display: grid;
+    gap: 10px;
+}
+
+@media (max-width: 860px) {
+    .grade-metricas,
+    .grade-admin,
+    .painel-logo-empresa,
+    .grade-formulario-dupla,
+    .grade-formulario-tripla {
+        grid-template-columns: 1fr;
+    }
+}

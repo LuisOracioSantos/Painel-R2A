@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina }} | {{ nome_sistema }}{% endblock %}
+
+{% block estilos %}
+<link rel="stylesheet" href="{{ url_for('cadastroboleto.static', filename='css/cadastroboleto.css') }}">
+{% endblock %}
+
+{% block classe_conteudo %}conteudo-cadastroboleto{% endblock %}
+
+{% block conteudo %}
+<section class="cabecalho-pagina" aria-labelledby="titulo-cadastro-boleto">
+    <div>
+        <h1 id="titulo-cadastro-boleto">Cadastro Boleto</h1>
+    </div>
+</section>
+
+<section class="cadastro-boleto">
+    <div class="painel-formulario">
+        <div>
+            <label for="empresaSelect">Cliente</label>
+            <select id="empresaSelect">
+                <option value="">Selecione o cliente...</option>
+            </select>
+        </div>
+
+        <div class="grade-formulario-cinco">
+            <div>
+                <label for="codBanco">Codigo Banco</label>
+                <input type="text" id="codBanco" name="cod_banco" placeholder="Ex: 001" value="756">
+            </div>
+            <div>
+                <label for="agencia">Agencia</label>
+                <input type="text" id="agencia" name="agencia" placeholder="Ex: 1234" value="3333">
+            </div>
+            <div>
+                <label for="contaCorrente">Conta Corrente</label>
+                <input type="text" id="contaCorrente" name="conta_corrente" placeholder="Ex: 999990" value="38628">
+            </div>
+            <div>
+                <label for="codCarteira">Codigo Carteira</label>
+                <input type="text" id="codCarteira" name="cod_carteira" placeholder="Ex: 1" value="1">
+            </div>
+            <div>
+                <label for="codCedente">Codigo Cedente</label>
+                <input type="text" id="codCedente" name="cod_cedente" placeholder="Ex: 213557-4" value="213557-4">
+            </div>
+        </div>
+    </div>
+
+    <form id="formArquivoBoleto" class="painel-formulario formulario-arquivo" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+        <div>
+            <label for="bancoArquivo">Banco</label>
+            <select name="banco" id="bancoArquivo" required>
+                <option value="">Selecione</option>
+                <option value="sicredi">Sicredi</option>
+                <option value="sicoob">Sicoob</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="arquivoBoleto" id="labelArquivoBoleto">Arquivo</label>
+            <input type="file" name="arquivo" id="arquivoBoleto" required>
+        </div>
+
+        <button class="botao-primario" type="submit">Ler Arquivo</button>
+    </form>
+
+    <div class="barra-acoes">
+        <h2>Tabela de Exportacao</h2>
+        <form action="{{ url_for('cadastroboleto.limpar_tabela') }}" method="post">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <button class="botao-secundario" type="submit">Limpar tabela</button>
+        </form>
+    </div>
+
+    <div class="tabela-admin" role="region" aria-label="Boletos para exportacao" tabindex="0">
+        <table id="tabelaDados">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Contrato</th>
+                    <th>Parcela</th>
+                    <th>Venc. Parcela</th>
+                    <th>Banco</th>
+                    <th>Carteira</th>
+                    <th>Cedente</th>
+                    <th>Agencia</th>
+                    <th>Conta</th>
+                    <th>Nosso No.</th>
+                    <th>Venc. Boleto</th>
+                    <th>Valor</th>
+                    <th>(%)Multa</th>
+                    <th>(%)Juros</th>
+                    <th>Doc</th>
+                    <th>Linha Digitavel</th>
+                    <th>Cod. Barras</th>
+                    <th class="oculto">No. Doc</th>
+                    <th class="oculto">Instrucoes</th>
+                    <th class="oculto">Mensagens</th>
+                    <th class="oculto">PIX</th>
+                    <th class="oculto">URL</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="acoes-exportacao">
+        <button data-acao="exportar-excel" class="botao-primario" type="button">Exportar Excel</button>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.CADASTRO_BOLETO_CONFIG = {
+        clientesUrl: "{{ url_for('cadastroboleto.consultar_clientes') }}",
+        buscarDadosUrl: "{{ url_for('cadastroboleto.buscar_dados_cliente') }}",
+        pdfUrl: "{{ url_for('cadastroboleto.importar_pdf') }}",
+        exportarUrl: "{{ url_for('cadastroboleto.exportar_excel') }}",
+        csrfToken: "{{ csrf_token() }}"
+    };
+</script>
+<script src="{{ url_for('cadastroboleto.static', filename='js/clientes.js') }}"></script>
+{% endblock %}

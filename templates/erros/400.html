@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block titulo %}Requisição inválida | {{ nome_sistema }}{% endblock %}
+
+{% block conteudo %}
+<section class="estado-erro" aria-labelledby="titulo-erro">
+    <p class="rotulo-secao">Erro 400</p>
+    <h1 id="titulo-erro">Requisição inválida</h1>
+    <p>Não foi possível validar os dados enviados. Recarregue a página e tente novamente.</p>
+    <a class="botao-link" href="{{ url_for('painel_principal.exibir_painel') }}">Voltar ao painel</a>
+</section>
+{% endblock %}

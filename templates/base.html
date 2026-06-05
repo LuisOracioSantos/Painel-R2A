@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block titulo %}{{ nome_sistema }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('comum.static', filename='css/base.css') }}">
+    {% block estilos %}{% endblock %}
+</head>
+<body class="{% block classe_body %}{% endblock %}">
+    <a class="atalho-conteudo" href="#conteudo-principal">Ir para o conteudo</a>
+
+    {% set exibir_barra_lateral = current_user.is_authenticated and current_user.tem_perfil_admin and request.endpoint and request.endpoint.startswith('dashboard.') %}
+    <div class="layout-app {{ 'layout-sem-barra' if not exibir_barra_lateral else '' }}">
+        {% if exibir_barra_lateral %}
+        <aside class="barra-lateral" aria-label="Navegacao principal">
+            <a class="marca" href="{{ url_for('painel_principal.exibir_painel') }}">
+                <span class="marca-simbolo" aria-hidden="true">MP</span>
+                <span>{{ nome_sistema }}</span>
+            </a>
+
+            <nav class="menu-principal">
+                <a class="menu-link {{ 'ativo' if request.endpoint == 'dashboard.exibir_catalogo_aplicacoes' else '' }}" href="{{ url_for('dashboard.exibir_catalogo_aplicacoes') }}">Cat&aacute;logo de aplica&ccedil;&otilde;es</a>
+                <a class="menu-link {{ 'ativo' if request.endpoint == 'dashboard.exibir_contas_perfis' else '' }}" href="{{ url_for('dashboard.exibir_contas_perfis') }}">Contas e Perfis</a>
+                <a class="menu-link {{ 'ativo' if request.endpoint == 'dashboard.exibir_acessos_usuario' else '' }}" href="{{ url_for('dashboard.exibir_acessos_usuario') }}">Acesso por Usu&aacute;rio</a>
+            </nav>
+        </aside>
+        {% endif %}
+
+        <div class="area-principal">
+            <header class="topo-app">
+                {% if logo_empresa_url and current_user.is_authenticated and not exibir_barra_lateral %}
+                <a class="logo-topo" href="{{ url_for('painel_principal.exibir_painel') }}" aria-label="Painel principal">
+                    <img src="{{ logo_empresa_url }}" alt="Logo da empresa">
+                </a>
+                {% endif %}
+
+                <div class="dados-topo">
+                    <span class="rotulo-topo">Ambiente</span>
+                    <strong>{{ config.get("APP_ENV", "desenvolvimento") }}</strong>
+                </div>
+
+                {% if current_user.is_authenticated %}
+                <div class="usuario-topo">
+                    <span class="rotulo-topo">Usuario</span>
+                    <strong>{{ current_user.nome }}</strong>
+                </div>
+                <form action="{{ url_for('autenticacao.encerrar_sessao') }}" method="post">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                    <button class="botao-discreto" type="submit">Sair</button>
+                </form>
+                {% endif %}
+            </header>
+
+            <main id="conteudo-principal" class="conteudo-principal {% block classe_conteudo %}{% endblock %}">
+                {% with mensagens = get_flashed_messages(with_categories=true) %}
+                    {% if mensagens %}
+                    <div class="mensagens" aria-live="polite">
+                        {% for categoria, mensagem in mensagens %}
+                        <p class="mensagem mensagem-{{ categoria }}">{{ mensagem }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block conteudo %}{% endblock %}
+            </main>
+
+            <footer class="rodape-app">
+                <span>&copy; {{ ano_atual }} {{ nome_sistema }}</span>
+            </footer>
+        </div>
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

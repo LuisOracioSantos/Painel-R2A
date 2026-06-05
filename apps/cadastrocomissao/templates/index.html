@@ -1,0 +1,39 @@
+﻿{% extends "cadastrocomissao_base.html" %}
+
+{% block title %}Enviar PDF | Leitor PDF para Excel{% endblock %}
+
+{% block content %}
+<section class="upload-shell">
+  <div class="row g-4 align-items-stretch">
+    <div class="col-12">
+      <div class="upload-panel h-100">
+       
+        <h1 class="display-6 fw-semibold mt-2">Comissão de Compra - Excel</h1>
+        <p class="text-secondary mb-4">
+          Envie o PDF da relacao de compradores e, se houver, o PDF de comissoes para preencher vencimento e valor do Guillermo por comprador.
+        </p>
+
+        <form action="{{ url_for('cadastrocomissao.extract_pdf') }}" method="post" enctype="multipart/form-data" class="upload-form">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          <div class="upload-grid">
+            <label for="pdf_file" class="drop-zone">
+              <span class="drop-zone-icon">PDF</span>
+              <span class="drop-zone-title">Relacao de compradores</span>
+              <span class="drop-zone-copy">Arquivo principal</span>
+              <input id="pdf_file" name="pdf_file" type="file" accept=".pdf,application/pdf" required>
+            </label>
+            <label for="commission_file" class="drop-zone">
+              <span class="drop-zone-icon">PDF</span>
+              <span class="drop-zone-title">Rateio de comissoes</span>
+              <span class="drop-zone-copy">Opcional, valor Guillermo</span>
+              <input id="commission_file" name="commission_file" type="file" accept=".pdf,application/pdf">
+            </label>
+          </div>
+          <button class="btn btn-primary btn-lg mt-3" type="submit">Ler PDF</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
