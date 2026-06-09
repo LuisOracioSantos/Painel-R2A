@@ -277,6 +277,9 @@
             <label for="usuario-senha">Senha inicial</label>
             <input id="usuario-senha" name="senha" type="password" minlength="8" required>
 
+            <label for="usuario-id-cadastro">Id de cadastro</label>
+            <input id="usuario-id-cadastro" name="id_cadastro" type="number" min="0" max="9" step="1" inputmode="numeric">
+
             <label for="usuario-perfil">Perfil</label>
             <select id="usuario-perfil" name="perfil">
                 <option value="usuario">Usuario</option>
@@ -287,10 +290,11 @@
         </form>
 
         <div class="tabela-admin" role="region" aria-label="Usuarios cadastrados" tabindex="0">
-            <table>
+            <table class="tabela-usuarios">
                 <thead>
                     <tr>
                         <th>Usuario</th>
+                        <th>Id de cadastro</th>
                         <th>Perfil</th>
                         <th>Status</th>
                         <th>Acao</th>
@@ -303,6 +307,7 @@
                             <strong>{{ usuario.nome }}</strong>
                             <small>{{ usuario.email }}</small>
                         </td>
+                        <td>{{ usuario.id_cadastro if usuario.id_cadastro is not none else '-' }}</td>
                         <td>{{ usuario.perfil }}</td>
                         <td>
                             <span class="selo-status {{ 'selo-inativo' if not usuario.ativo else '' }}">
@@ -310,17 +315,58 @@
                             </span>
                         </td>
                         <td>
-                            <form action="{{ url_for('dashboard.alternar_status_usuario', usuario_id=usuario.id) }}" method="post">
+                            <div class="acoes-tabela">
+                                <a class="botao-tabela" href="#editar-usuario-{{ usuario.id }}">Editar</a>
+                                <form action="{{ url_for('dashboard.alternar_status_usuario', usuario_id=usuario.id) }}" method="post">
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                    <button class="botao-tabela" type="submit" {{ 'disabled' if usuario.id == current_user.id else '' }}>
+                                        {{ 'Inativar' if usuario.ativo else 'Ativar' }}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr id="editar-usuario-{{ usuario.id }}" class="linha-edicao-usuario">
+                        <td colspan="5">
+                            <form class="painel-formulario formulario-edicao-usuario" action="{{ url_for('dashboard.editar_usuario', usuario_id=usuario.id) }}" method="post">
                                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                                <button class="botao-tabela" type="submit" {{ 'disabled' if usuario.id == current_user.id else '' }}>
-                                    {{ 'Inativar' if usuario.ativo else 'Ativar' }}
-                                </button>
+                                <h3>Editar {{ usuario.nome }}</h3>
+
+                                <div class="grade-formulario-dupla">
+                                    <div>
+                                        <label for="editar-usuario-nome-{{ usuario.id }}">Nome</label>
+                                        <input id="editar-usuario-nome-{{ usuario.id }}" name="nome" type="text" maxlength="120" value="{{ usuario.nome }}" required>
+                                    </div>
+                                    <div>
+                                        <label for="editar-usuario-email-{{ usuario.id }}">E-mail</label>
+                                        <input id="editar-usuario-email-{{ usuario.id }}" name="email" type="email" maxlength="255" value="{{ usuario.email }}" required>
+                                    </div>
+                                </div>
+
+                                <div class="grade-formulario-dupla">
+                                    <div>
+                                        <label for="editar-usuario-id-cadastro-{{ usuario.id }}">Id de cadastro</label>
+                                        <input id="editar-usuario-id-cadastro-{{ usuario.id }}" name="id_cadastro" type="number" min="0" max="9" step="1" inputmode="numeric" value="{{ usuario.id_cadastro if usuario.id_cadastro is not none else '' }}">
+                                    </div>
+                                    <div>
+                                        <label for="editar-usuario-perfil-{{ usuario.id }}">Perfil</label>
+                                        <select id="editar-usuario-perfil-{{ usuario.id }}" name="perfil">
+                                            <option value="usuario" {{ 'selected' if usuario.perfil == 'usuario' else '' }}>Usuario</option>
+                                            <option value="admin" {{ 'selected' if usuario.perfil == 'admin' else '' }}>Admin</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="acoes-tabela">
+                                    <button class="botao-primario" type="submit">Salvar alteracoes</button>
+                                    <a class="botao-tabela" href="{{ url_for('dashboard.exibir_contas_perfis') }}">Cancelar</a>
+                                </div>
                             </form>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4">Nenhum usuario cadastrado.</td>
+                        <td colspan="5">Nenhum usuario cadastrado.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

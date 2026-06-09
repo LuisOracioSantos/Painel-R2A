@@ -27,7 +27,7 @@
 }
 
 .cadastro-mapa-formulario {
-    gap: 18px;
+    gap: 12px;
     min-height: calc(100vh - 250px);
 }
 
@@ -69,7 +69,7 @@
 .barra-navegacao-paginas {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
 }
 
@@ -80,31 +80,63 @@
 
 .tabela-admin {
     overflow-x: auto;
-    min-height: 260px;
+    min-height: 190px;
     border: 1px solid var(--cor-borda);
     border-radius: var(--raio);
     background: var(--cor-superficie);
-    box-shadow: var(--sombra-suave);
+    box-shadow: 0 10px 24px rgba(23, 32, 42, 0.06);
 }
 
 .tabela-admin table {
     width: 100%;
     min-width: 560px;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.88rem;
 }
 
 .tabela-admin th,
 .tabela-admin td {
-    padding: 13px 14px;
+    padding: 8px 10px;
     border-bottom: 1px solid var(--cor-borda);
     text-align: left;
     vertical-align: middle;
 }
 
 .tabela-admin th {
-    color: var(--cor-texto-suave);
-    font-size: 0.78rem;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #173f63;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
     text-transform: uppercase;
+}
+
+.tabela-admin td {
+    background: #ffffff;
+}
+
+.tabela-admin tbody tr:nth-child(even) td {
+    background: #fbfdff;
+}
+
+.tabela-admin tbody tr:hover td {
+    background: #eef7f6;
+}
+
+.tabela-admin th:first-child,
+.tabela-admin td:first-child {
+    width: 46px;
+    text-align: center;
+}
+
+.tabela-admin input[type="checkbox"] {
+    min-height: auto;
+    width: 16px;
+    height: 16px;
+    padding: 0;
 }
 
 .tabela-admin tr:last-child td {

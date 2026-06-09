@@ -200,6 +200,31 @@
     width: 24%;
 }
 
+.tabela-admin .tabela-usuarios th:nth-child(1),
+.tabela-admin .tabela-usuarios td:nth-child(1) {
+    width: 34%;
+}
+
+.tabela-admin .tabela-usuarios th:nth-child(2),
+.tabela-admin .tabela-usuarios td:nth-child(2) {
+    width: 12%;
+}
+
+.tabela-admin .tabela-usuarios th:nth-child(3),
+.tabela-admin .tabela-usuarios td:nth-child(3) {
+    width: 18%;
+}
+
+.tabela-admin .tabela-usuarios th:nth-child(4),
+.tabela-admin .tabela-usuarios td:nth-child(4) {
+    width: 14%;
+}
+
+.tabela-admin .tabela-usuarios th:nth-child(5),
+.tabela-admin .tabela-usuarios td:nth-child(5) {
+    width: 22%;
+}
+
 .tabela-admin td small {
     display: block;
     margin-top: 4px;
@@ -283,20 +308,24 @@
     object-fit: contain;
 }
 
-.linha-edicao-aplicacao {
+.linha-edicao-aplicacao,
+.linha-edicao-usuario {
     display: none;
 }
 
-.linha-edicao-aplicacao:target {
+.linha-edicao-aplicacao:target,
+.linha-edicao-usuario:target {
     display: table-row;
 }
 
-.linha-edicao-aplicacao td {
+.linha-edicao-aplicacao td,
+.linha-edicao-usuario td {
     padding: 24px;
     background: #f9fbfc;
 }
 
-.formulario-edicao-aplicacao {
+.formulario-edicao-aplicacao,
+.formulario-edicao-usuario {
     width: 100%;
     margin: 0;
     gap: 18px;
@@ -305,7 +334,8 @@
     box-shadow: none;
 }
 
-.formulario-edicao-aplicacao h3 {
+.formulario-edicao-aplicacao h3,
+.formulario-edicao-usuario h3 {
     margin: 0 0 4px;
 }
 

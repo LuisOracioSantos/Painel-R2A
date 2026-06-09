@@ -132,7 +132,6 @@ def clear_extraction(extraction_id):
     storage = JsonStorage(current_app.config["EXTRACTION_FOLDER"])
     storage.delete(extraction_id)
     _delete_uploaded_pdf(extraction_id)
-    flash("Dados limpos. Selecione outro PDF para continuar.", "success")
     return redirect(url_for("cadastrocomissao.index"))
 
 
@@ -232,7 +231,7 @@ def export_excel():
         return redirect(url_for("cadastrocomissao.index"))
 
     exporter = ExcelExporter(current_app.config["EXPORT_FOLDER"])
-    output_path = exporter.export(extraction, selection)
+    output_path = exporter.export(extraction, selection, id_cadastro=current_user.id_cadastro)
     return send_file(output_path, as_attachment=True, download_name=output_path.name)
 
 

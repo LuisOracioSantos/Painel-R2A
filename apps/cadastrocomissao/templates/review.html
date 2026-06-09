@@ -17,31 +17,23 @@
       </p>
     </div>
     <div class="review-actions">
-      <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('cadastrocomissao.index') }}">Voltar</a>
+      <a class="btn btn-outline-secondary review-action-btn" href="{{ url_for('cadastrocomissao.index') }}">Voltar</a>
       <form action="{{ url_for('cadastrocomissao.clear_extraction', extraction_id=extraction_id) }}" method="post">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-        <button class="btn btn-outline-danger btn-lg" type="submit">Limpar dados</button>
+        <button class="btn btn-outline-danger review-action-btn" type="submit">Limpar dados</button>
       </form>
       <form id="exportForm" action="{{ url_for('cadastrocomissao.export_excel') }}" method="post">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="extraction_id" value="{{ extraction_id }}">
         <input type="hidden" name="selection_payload" id="selectionPayload">
+        <button class="btn btn-success review-action-btn" type="submit" {% if not has_buyers %}disabled{% endif %}>Exportar Excel</button>
         <label class="export-filter-option">
           <input class="form-check-input" type="checkbox" id="excludeMissingDocument" checked>
           <span>Nao exportar sem CPF/CNPJ</span>
         </label>
-        <button class="btn btn-success btn-lg" type="submit" {% if not has_buyers %}disabled{% endif %}>Exportar Excel</button>
       </form>
     </div>
   </div>
-
-  {% if extraction.quality.notes %}
-    <div class="alert alert-info py-2 mb-3">
-      {% for note in extraction.quality.notes %}
-        <div>{{ note }}</div>
-      {% endfor %}
-    </div>
-  {% endif %}
 
   <ul class="nav nav-tabs review-tabs" id="reviewTabs" role="tablist">
     <li class="nav-item" role="presentation">
@@ -69,13 +61,20 @@
                 <h2 class="h5 fw-semibold mb-1">Compradores</h2>
                 <p class="text-secondary mb-0">
                   {{ table.rows|length }} linha(s), {{ visible_headers|length }} coluna(s).
-                  {% if table.missing_count %}
-                    <span class="missing-summary">{{ table.missing_count }} pendencia(s) em {{ table.missing_rows }} comprador(es).</span>
-                  {% endif %}
-                  {% if table.duplicate_rows %}
-                    <span class="duplicate-summary">{{ table.duplicate_rows }} duplicidade(s).</span>
+                  {% if extraction.quality.commission_matches is defined %}
+                    {{ extraction.quality.commission_matches or 0 }} comprador(es) vinculado(s) por nome.
                   {% endif %}
                 </p>
+              </div>
+              <div class="buyer-metrics" aria-label="Resumo dos compradores">
+                {% if extraction.quality.commission_records is defined %}
+                  <span><strong>{{ extraction.quality.commission_records or 0 }}</strong> comprador(es)</span>
+                  <span><strong>{{ extraction.quality.commission_matches or 0 }}</strong> vinculado(s) por nome</span>
+                {% else %}
+                  <span><strong>{{ table.rows|length }}</strong> comprador(es)</span>
+                {% endif %}
+                <span class="{% if table.missing_count %}metric-danger{% endif %}"><strong>{{ table.missing_count or 0 }}</strong> pendencias</span>
+                <span class="{% if table.duplicate_rows %}metric-warning{% endif %}"><strong>{{ table.duplicate_rows or 0 }}</strong> duplicidades</span>
               </div>
             </div>
 
@@ -85,17 +84,6 @@
               </div>
             {% else %}
               <div class="alert alert-warning py-2 mb-3 d-none" id="longAuctionAlert"></div>
-            {% endif %}
-
-            {% if table.duplicate_rows %}
-              <div class="alert alert-warning py-2 mb-3" id="duplicateBuyerAlert">
-                {{ table.duplicate_rows }} linha(s) com comprador duplicado.
-                {% if table.duplicate_name_value_rows %}
-                  {{ table.duplicate_name_value_rows }} tambem tem o mesmo valor.
-                {% endif %}
-              </div>
-            {% else %}
-              <div class="alert alert-warning py-2 mb-3 d-none" id="duplicateBuyerAlert"></div>
             {% endif %}
 
             <div class="buyer-table-wrap" data-table-id="{{ table.id }}" data-extraction-id="{{ extraction_id }}">
@@ -213,4 +201,3 @@
 {{ super() }}
 <script src="{{ url_for('cadastrocomissao.static', filename='js/review.js') }}"></script>
 {% endblock %}
-

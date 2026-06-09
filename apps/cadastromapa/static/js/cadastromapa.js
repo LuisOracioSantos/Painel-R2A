@@ -1,6 +1,6 @@
 (function () {
     const LIMITE_LEILAO = 50;
-    const PADRAO_LOTE_OBSERVACAO = /Lote\(s\):\s*\d+/i;
+    const PADRAO_LOTE_OBSERVACAO = /Lote(?:\(s\))?:\s*\d+/i;
     const camposCadastro = [
         "leilao",
         "datacontrato",
@@ -53,10 +53,14 @@
         document.querySelectorAll(".cadastro-mapa-formulario input").forEach(function (campo) {
             campo.addEventListener("input", function () {
                 salvarCamposPagina();
+                replicarLeilao(campo);
                 validarCampo(campo);
             });
 
-            campo.addEventListener("change", salvarCamposPagina);
+            campo.addEventListener("change", function () {
+                salvarCamposPagina();
+                replicarLeilao(campo);
+            });
         });
     }
 
@@ -294,6 +298,18 @@
             obterValor("email2"),
             obterValor("email3"),
         ];
+    }
+
+    function replicarLeilao(campo) {
+        if (!campo || campo.id !== "leilao") {
+            return;
+        }
+
+        const valor = campo.value.trim();
+
+        estado.paginas.forEach(function (pagina) {
+            pagina.leilao = valor;
+        });
     }
 
     function obterValor(nomeCampo) {

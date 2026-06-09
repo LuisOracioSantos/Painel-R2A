@@ -83,11 +83,6 @@ class CommissionExtractor:
         quality = extraction.setdefault("quality", {})
         quality["commission_records"] = commission_data.get("count", 0)
         quality["commission_matches"] = matched
-        quality.setdefault("notes", []).append(
-            "PDF de comissoes importado: "
-            f"{commission_data.get('count', 0)} comprador(es), {matched} vinculado(s) por nome."
-        )
-
         return {"matched": matched, "records": commission_data.get("count", 0)}
 
     def _collect_records_from_table(self, raw_table, records):

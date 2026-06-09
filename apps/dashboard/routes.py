@@ -7,6 +7,7 @@ from apps.dashboard.servicos import (
     alternar_status_usuario as alternar_status_usuario_servico,
     atualizar_acessos_por_formulario,
     atualizar_aplicacao_por_formulario,
+    atualizar_usuario_por_formulario,
     calcular_metricas,
     criar_aplicacao_por_formulario,
     criar_usuario_por_formulario,
@@ -155,6 +156,14 @@ def remover_logo():
 @acesso_admin_obrigatorio
 def criar_usuario():
     sucesso, mensagem = criar_usuario_por_formulario(request.form)
+    flash(mensagem, "sucesso" if sucesso else "erro")
+    return redirect(url_for("dashboard.exibir_contas_perfis"))
+
+
+@dashboard_bp.post("/usuarios/<int:usuario_id>/editar")
+@acesso_admin_obrigatorio
+def editar_usuario(usuario_id):
+    sucesso, mensagem = atualizar_usuario_por_formulario(usuario_id, request.form)
     flash(mensagem, "sucesso" if sucesso else "erro")
     return redirect(url_for("dashboard.exibir_contas_perfis"))
 

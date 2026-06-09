@@ -230,9 +230,13 @@ def criar_usuario_por_formulario(formulario):
     email = formulario.get("email", "").strip().lower()
     senha = formulario.get("senha", "")
     perfil = "admin" if formulario.get("perfil") == "admin" else "usuario"
+    id_cadastro, erro_id_cadastro = validar_id_cadastro(formulario.get("id_cadastro"))
 
     if not nome or not email or not senha:
         return False, "Preencha nome, e-mail e senha."
+
+    if erro_id_cadastro:
+        return False, erro_id_cadastro
 
     if len(senha) < 8:
         return False, "A senha precisa ter pelo menos 8 caracteres."
@@ -242,12 +246,44 @@ def criar_usuario_por_formulario(formulario):
     if usuario_existente:
         return False, "Já existe um usuário com esse e-mail."
 
-    usuario = Usuario(nome=nome, email=email, perfil=perfil, ativo=True)
+    if id_cadastro_em_uso(id_cadastro):
+        return False, "Esse Id de cadastro ja esta em uso por outro usuario."
+
+    usuario = Usuario(nome=nome, email=email, perfil=perfil, id_cadastro=id_cadastro, ativo=True)
     usuario.definir_senha(senha)
     db.session.add(usuario)
     db.session.commit()
 
     return True, "Usuário criado com sucesso."
+
+
+def atualizar_usuario_por_formulario(usuario_id, formulario):
+    usuario = db.get_or_404(Usuario, usuario_id)
+    nome = formulario.get("nome", "").strip()
+    email = formulario.get("email", "").strip().lower()
+    perfil = "admin" if formulario.get("perfil") == "admin" else "usuario"
+    id_cadastro, erro_id_cadastro = validar_id_cadastro(formulario.get("id_cadastro"))
+
+    if not nome or not email:
+        return False, "Preencha nome e e-mail."
+
+    if erro_id_cadastro:
+        return False, erro_id_cadastro
+
+    usuario_existente = Usuario.query.filter(Usuario.email == email, Usuario.id != usuario.id).first()
+    if usuario_existente:
+        return False, "Já existe outro usuário com esse e-mail."
+
+    if id_cadastro_em_uso(id_cadastro, usuario_id_ignorado=usuario.id):
+        return False, "Esse Id de cadastro ja esta em uso por outro usuario."
+
+    usuario.nome = nome
+    usuario.email = email
+    usuario.perfil = perfil
+    usuario.id_cadastro = id_cadastro
+    db.session.commit()
+
+    return True, "Usuário atualizado com sucesso."
 
 
 def alternar_status_usuario(usuario_id, usuario_atual_id):
@@ -311,3 +347,25 @@ def converter_inteiro(valor, padrao=None):
         return int(valor)
     except (TypeError, ValueError):
         return padrao
+
+
+def validar_id_cadastro(valor):
+    valor = str(valor or "").strip()
+    if not valor:
+        return None, None
+
+    if not re.fullmatch(r"\d", valor):
+        return None, "O Id de cadastro deve ser um numero de 0 a 9."
+
+    return int(valor), None
+
+
+def id_cadastro_em_uso(id_cadastro, usuario_id_ignorado=None):
+    if id_cadastro is None:
+        return False
+
+    consulta = Usuario.query.filter_by(id_cadastro=id_cadastro)
+    if usuario_id_ignorado is not None:
+        consulta = consulta.filter(Usuario.id != usuario_id_ignorado)
+
+    return consulta.first() is not None

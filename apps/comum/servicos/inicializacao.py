@@ -34,6 +34,17 @@ def aplicar_migracoes_simples():
         db.session.execute(text("ALTER TABLE aplicacoes ADD COLUMN imagem_icone VARCHAR(500)"))
         db.session.commit()
 
+    if "usuarios" in inspetor.get_table_names():
+        colunas_usuarios = {coluna["name"] for coluna in inspetor.get_columns("usuarios")}
+        if "id_cadastro" not in colunas_usuarios:
+            db.session.execute(text("ALTER TABLE usuarios ADD COLUMN id_cadastro INTEGER"))
+            db.session.commit()
+
+        indices_usuarios = {indice["name"] for indice in inspetor.get_indexes("usuarios")}
+        if "ix_usuarios_id_cadastro" not in indices_usuarios:
+            db.session.execute(text("CREATE UNIQUE INDEX ix_usuarios_id_cadastro ON usuarios (id_cadastro)"))
+            db.session.commit()
+
 
 def criar_dados_iniciais():
     admin = obter_ou_criar_admin()

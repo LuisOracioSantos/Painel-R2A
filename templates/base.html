@@ -45,6 +45,10 @@
                     <span class="rotulo-topo">Usuario</span>
                     <strong>{{ current_user.nome }}</strong>
                 </div>
+                <div class="usuario-topo">
+                    <span class="rotulo-topo">Id cadastro</span>
+                    <strong>{{ current_user.id_cadastro if current_user.id_cadastro is not none else '-' }}</strong>
+                </div>
                 <form action="{{ url_for('autenticacao.encerrar_sessao') }}" method="post">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     <button class="botao-discreto" type="submit">Sair</button>
@@ -66,9 +70,7 @@
                 {% block conteudo %}{% endblock %}
             </main>
 
-            <footer class="rodape-app">
-                <span>&copy; {{ ano_atual }} {{ nome_sistema }}</span>
-            </footer>
+            <footer class="rodape-app"></footer>
         </div>
     </div>
     {% block scripts %}{% endblock %}

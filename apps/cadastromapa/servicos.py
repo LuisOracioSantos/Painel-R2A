@@ -1,5 +1,6 @@
 import re
 import unicodedata
+from datetime import datetime
 from html import escape
 from io import BytesIO
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -33,29 +34,51 @@ PALAVRAS_IGNORAR_BAIRRO = [
     "ZONA RURAL",
 ]
 COLUNAS_EXPORTACAO = [
-    ("leilao", "Leilao"),
-    ("datacontrato", "Data Contrato"),
-    ("produto", "Produto"),
-    ("vendedor", "Vendedor"),
-    ("comprador", "Comprador"),
     ("cpfcnpj", "CPF/CNPJ"),
-    ("endereco", "Endereco"),
-    ("numero", "Numero"),
-    ("bairro", "Bairro"),
-    ("cep", "CEP"),
-    ("cidade", "Cidade"),
-    ("uf", "UF"),
-    ("complemento", "Complemento"),
-    ("telefone1", "Telefone 1"),
-    ("telefone2", "Telefone 2"),
-    ("telefone3", "Telefone 3"),
-    ("email1", "E-mail 1"),
-    ("email2", "E-mail 2"),
-    ("email3", "E-mail 3"),
-    ("observacao", "Observacao"),
-    ("parcela", "Numero Parcela"),
-    ("vencimento", "Vencimento"),
-    ("valor", "Valor"),
+    ("comprador", "NOME / RAZÃO SOCIAL"),
+    ("filial", "FILIAL"),
+    ("numerocontrato", "NÚMERO CONTRATO"),
+    ("datacontrato", "DATA CONTRATO"),
+    ("plano", "PLANO"),
+    ("tipoproduto", "TIPO DE PRODUTO"),
+    ("observacaocontrato", "OBSERVAÇÃO  CONTRATO"),
+    ("parcela", "PARCELA"),
+    ("vencimento", "VENCIMENTO"),
+    ("valor", "VALOR"),
+    ("observacaoparcela", "OBSERVAÇÃO PARCELA"),
+    ("telresidencial1", "TEL. RESIDENCIAL 1"),
+    ("telresidencial2", "TEL. RESIDENCIAL 2"),
+    ("telcomercial1", "TEL. COMERCIAL 1"),
+    ("telcomercial2", "TEL. COMERCIAL 2"),
+    ("telcelular1", "TEL. CELULAR 1"),
+    ("telcelular2", "TEL. CELULAR 2"),
+    ("telreferencia1", "TEL. REFERÊNCIA 1"),
+    ("obstelreferencia1", "OBS.  TEL. REFERÊNCIA 1"),
+    ("telreferencia2", "TEL. REFERÊNCIA 2"),
+    ("obstelreferencia2", "OBS.  TEL. REFERÊNCIA 2"),
+    ("telreferencia3", "TEL. REFERÊNCIA 3"),
+    ("obstelreferencia3", "OBS.  TEL. REFERÊNCIA 3"),
+    ("email1", "EMAIL 1"),
+    ("email2", "EMAIL 2"),
+    ("email3", "EMAIL 3"),
+    ("enderecores", "ENDEREÇO RES."),
+    ("numerores", "NUMERO RES."),
+    ("complementores", "COMPLEMENTO RES."),
+    ("bairrores", "BAIRRO RES."),
+    ("cepres", "CEP  RES."),
+    ("cidaderes", "CIDADE RES."),
+    ("ufres", "UF RES."),
+    ("enderecocom", "ENDEREÇO COM."),
+    ("numerocom", "NUMERO COM."),
+    ("complementocom", "COMPLEMENTO COM."),
+    ("bairrocom", "BAIRRO COM."),
+    ("cepcom", "CEP  COM."),
+    ("cidadecom", "CIDADE COM."),
+    ("ufcom", "UF COM."),
+    ("rgie", "RG/IE"),
+    ("datanasc", "DATA NASC."),
+    ("pai", "PAI"),
+    ("mae", "MAE"),
 ]
 
 
@@ -78,7 +101,7 @@ def extrair_dados_cadastro_mapa(arquivo_pdf):
         raise ValueError("Nao foi possivel abrir o PDF enviado.") from erro
 
     paginas = [
-        extrair_dados_pagina(indice + 1, normalizar_espacos(pagina.get_text()))
+        extrair_dados_pagina(indice + 1, pagina.get_text())
         for indice, pagina in enumerate(documento_pdf)
     ]
 
@@ -89,15 +112,15 @@ def extrair_dados_cadastro_mapa(arquivo_pdf):
 
 
 def extrair_dados_pagina(numero_pagina, texto):
-    leilao, data_contrato = extrair_leilao(texto)
-    comprador, cpf_cnpj = extrair_comprador(texto)
-    vendedor = extrair_vendedor(texto)
-    endereco = extrair_endereco(texto)
+    texto_normalizado = normalizar_espacos(texto)
+    leilao, data_contrato = extrair_leilao(texto_normalizado)
+    comprador, cpf_cnpj = extrair_comprador(texto_normalizado)
+    vendedor = extrair_vendedor(texto_normalizado)
+    endereco = extrair_endereco(texto_normalizado)
     logradouro, numero, cep, cidade, uf, bairro, complemento = tratar_endereco(endereco)
-    telefones = re.findall(r"\(\d{2}\)\s*\d{4,5}-?\d+", texto)
-    emails = re.findall(r"[\w\.-]+@[\w\.-]+", texto)
-    lotes = re.findall(r"\b(\d{1,5})\s+S\b", texto)
-    lotes_texto = ", ".join(lotes) if lotes else ""
+    telefones = re.findall(r"\(\d{2}\)\s*\d{4,5}-?\d+", texto_normalizado)
+    emails = re.findall(r"[\w\.-]+@[\w\.-]+", texto_normalizado)
+    lotes_animais = extrair_lotes_animais(texto)
 
     return {
         "pagina": numero_pagina,
@@ -116,8 +139,8 @@ def extrair_dados_pagina(numero_pagina, texto):
         "complemento": complemento,
         "telefones": telefones[:3],
         "emails": emails[:3],
-        "observacao": f"{leilao} - Lote(s): {lotes_texto}",
-        "parcelas": extrair_parcelas(texto),
+        "observacao": montar_observacao(leilao, lotes_animais),
+        "parcelas": extrair_parcelas(texto_normalizado),
     }
 
 
@@ -131,19 +154,58 @@ def extrair_leilao(texto):
         texto,
     )
 
-    if not match:
-        return "", ""
+    if match:
+        nome_leilao = match.group(1).strip()
+        data_contrato = match.group(2)
+    else:
+        dados_leilao = extrair_leilao_entre_vendedor_e_comprador(texto)
 
-    nome_leilao = match.group(1).strip()
-    data_contrato = match.group(2)
+        if not dados_leilao:
+            return "", ""
+
+        nome_leilao, data_contrato = dados_leilao
+
+    nome_leilao = re.sub(r"\bNelore\b", "__NELORE__", nome_leilao, flags=re.IGNORECASE)
 
     for palavra in ["Leilao", "Leilão", "Virtual", "Nelore"]:
         nome_leilao = re.sub(rf"\b{palavra}\b", "", nome_leilao, flags=re.IGNORECASE)
 
+    nome_leilao = nome_leilao.replace("__NELORE__", "Nelore")
     nome_leilao = re.sub(r"\s{2,}", " ", nome_leilao)
     nome_leilao = re.sub(r"\s*-\s*", " - ", nome_leilao).strip(" -")
 
     return f"{nome_leilao} - {data_contrato}", data_contrato
+
+
+def extrair_leilao_entre_vendedor_e_comprador(texto):
+    trecho_match = re.search(r"Vendedor:\s*(.*?)\s*Comprador:", texto)
+
+    if not trecho_match:
+        return None
+
+    trecho = trecho_match.group(1)
+    data_match = re.search(r"\d{2}/\d{2}/\d{4}", trecho)
+
+    if not data_match:
+        return None
+
+    inicio_leilao = encontrar_inicio_leilao(trecho[: data_match.start()])
+
+    if inicio_leilao is None:
+        return None
+
+    nome_leilao = trecho[inicio_leilao : data_match.start()].strip(" -")
+    return nome_leilao, data_match.group()
+
+
+def encontrar_inicio_leilao(texto):
+    posicoes = []
+
+    for padrao in [r"Leil[aã]o", "Virtual", "Nelore"]:
+        for match in re.finditer(rf"\b{padrao}\b", texto, flags=re.IGNORECASE):
+            posicoes.append(match.start())
+
+    return max(posicoes) if posicoes else None
 
 
 def extrair_comprador(texto):
@@ -182,6 +244,117 @@ def extrair_parcelas(texto):
         )
 
     return parcelas
+
+
+def extrair_lotes_animais(texto):
+    itens_por_linhas = extrair_lotes_animais_por_linhas(texto)
+
+    if itens_por_linhas:
+        return itens_por_linhas
+
+    itens = []
+    texto_normalizado = normalizar_espacos(texto)
+    padrao = re.compile(
+        r"\b(?P<lote>\d{1,5})\s+"
+        r"(?P<qtde>\d+)\s+"
+        r"(?P<sexo>[A-Z])\s+"
+        r"(?P<animal>.+?)\s+"
+        r"(?P<peso>\d+(?:[,.]\d+)?)\s+"
+        r"(?P<preco>\d{1,3}(?:\.\d{3})*,\d{2})\b"
+    )
+
+    for match in padrao.finditer(texto_normalizado):
+        animal = formatar_descricao_animal(match.group("animal"))
+        itens.append({"lote": match.group("lote"), "animal": animal})
+
+    if itens:
+        return itens
+
+    return [{"lote": lote, "animal": ""} for lote in re.findall(r"\b(\d{1,5})\s+[A-Z]\b", texto_normalizado)]
+
+
+def extrair_lotes_animais_por_linhas(texto):
+    linhas = [linha.strip() for linha in str(texto or "").splitlines() if linha.strip()]
+
+    for indice, linha in enumerate(linhas):
+        if linha != "Qtde":
+            continue
+
+        if linhas[indice : indice + 4] != ["Qtde", "Lote", "Sexo", "Animal"]:
+            continue
+
+        try:
+            inicio_valores = linhas.index("R$/KG", indice) + 1
+        except ValueError:
+            continue
+
+        if len(linhas) <= inicio_valores + 3:
+            continue
+
+        qtde, lote, sexo = linhas[inicio_valores : inicio_valores + 3]
+
+        if not re.fullmatch(r"\d+", qtde):
+            continue
+
+        if not re.fullmatch(r"\d{1,5}", lote):
+            continue
+
+        if not re.fullmatch(r"[A-Z]", sexo):
+            continue
+
+        animal_linhas = coletar_linhas_animal(linhas[inicio_valores + 3 :])
+        animal = formatar_descricao_animal(" ".join(animal_linhas))
+
+        return [{"lote": lote, "animal": animal}]
+
+    return []
+
+
+def coletar_linhas_animal(linhas):
+    animal_linhas = []
+
+    for linha in linhas:
+        if eh_inicio_condicao_pagamento(linha):
+            break
+
+        if linha in {"Machos", "Fêmeas", "Femeas", "Sem sexo", "Total Crias"}:
+            break
+
+        animal_linhas.append(linha)
+
+    return animal_linhas
+
+
+def eh_inicio_condicao_pagamento(linha):
+    texto = normalizar_texto(linha)
+    return bool(
+        re.search(r"\b\d+\+\d+\s+PARCELAS\b", texto)
+        or re.search(r"\b\d+\s+PARCELAS\b", texto)
+        or texto in {"MENSAL", "A VISTA", "AVISTA"}
+    )
+
+
+def formatar_descricao_animal(texto):
+    texto = normalizar_espacos(texto).strip()
+    return re.sub(r"^(\([^)]*%\))\s+", r"\1  ", texto)
+
+
+def montar_observacao(leilao, lotes_animais):
+    if not lotes_animais:
+        return f"{leilao} - Lote(s): "
+
+    if len(lotes_animais) == 1:
+        item = lotes_animais[0]
+        animal = f" - {item['animal']}" if item.get("animal") else ""
+        return f"{leilao} - Lote: {item['lote']}{animal}"
+
+    descricoes = []
+
+    for item in lotes_animais:
+        animal = f" - {item['animal']}" if item.get("animal") else ""
+        descricoes.append(f"Lote: {item['lote']}{animal}")
+
+    return f"{leilao} - {'; '.join(descricoes)}"
 
 
 def tratar_endereco(endereco):
@@ -274,8 +447,8 @@ def deve_ignorar_bairro(texto):
     return any(palavra in texto_normalizado for palavra in PALAVRAS_IGNORAR_BAIRRO)
 
 
-def gerar_planilha_cadastro_mapa(paginas):
-    linhas = montar_linhas_exportacao(paginas)
+def gerar_planilha_cadastro_mapa(paginas, id_cadastro=None):
+    linhas = montar_linhas_exportacao(paginas, id_cadastro=id_cadastro)
     arquivo = BytesIO()
 
     with ZipFile(arquivo, "w", ZIP_DEFLATED) as planilha:
@@ -292,34 +465,57 @@ def gerar_planilha_cadastro_mapa(paginas):
     return arquivo
 
 
-def montar_linhas_exportacao(paginas):
+def montar_linhas_exportacao(paginas, id_cadastro=None):
     linhas = [[titulo for _, titulo in COLUNAS_EXPORTACAO]]
+    id_cadastro = normalizar_id_cadastro(id_cadastro)
 
-    for pagina in paginas:
+    for indice_pagina, pagina in enumerate(paginas, start=1):
         telefones = pagina.get("telefones") or []
         emails = pagina.get("emails") or []
 
         dados_base = {
-            "leilao": pagina.get("leilao", ""),
-            "datacontrato": pagina.get("datacontrato", ""),
-            "produto": pagina.get("produto", ""),
-            "vendedor": pagina.get("vendedor", ""),
-            "comprador": pagina.get("comprador", ""),
             "cpfcnpj": pagina.get("cpfcnpj", ""),
-            "endereco": pagina.get("endereco", ""),
-            "numero": pagina.get("numero", ""),
-            "bairro": pagina.get("bairro", ""),
-            "cep": pagina.get("cep", ""),
-            "cidade": pagina.get("cidade", ""),
-            "uf": pagina.get("uf", ""),
-            "complemento": pagina.get("complemento", ""),
-            "telefone1": obter_item(telefones, 0),
-            "telefone2": obter_item(telefones, 1),
-            "telefone3": obter_item(telefones, 2),
+            "comprador": pagina.get("comprador", ""),
+            "filial": "",
+            "numerocontrato": montar_numero_contrato(pagina, indice_pagina, id_cadastro),
+            "datacontrato": pagina.get("datacontrato", ""),
+            "plano": "",
+            "tipoproduto": pagina.get("produto", ""),
+            "observacaocontrato": pagina.get("observacao", ""),
+            "observacaoparcela": "",
+            "telresidencial1": obter_item(telefones, 0),
+            "telresidencial2": obter_item(telefones, 1),
+            "telcomercial1": "",
+            "telcomercial2": "",
+            "telcelular1": obter_item(telefones, 2),
+            "telcelular2": "",
+            "telreferencia1": "",
+            "obstelreferencia1": "",
+            "telreferencia2": "",
+            "obstelreferencia2": "",
+            "telreferencia3": "",
+            "obstelreferencia3": "",
             "email1": obter_item(emails, 0),
             "email2": obter_item(emails, 1),
             "email3": obter_item(emails, 2),
-            "observacao": pagina.get("observacao", ""),
+            "enderecores": pagina.get("endereco", ""),
+            "numerores": pagina.get("numero", ""),
+            "complementores": pagina.get("complemento", ""),
+            "bairrores": pagina.get("bairro", ""),
+            "cepres": somente_digitos(pagina.get("cep", "")),
+            "cidaderes": pagina.get("cidade", ""),
+            "ufres": pagina.get("uf", ""),
+            "enderecocom": "",
+            "numerocom": "",
+            "complementocom": "",
+            "bairrocom": "",
+            "cepcom": "",
+            "cidadecom": "",
+            "ufcom": "",
+            "rgie": "",
+            "datanasc": "",
+            "pai": "",
+            "mae": "",
         }
 
         for parcela in pagina.get("parcelas") or []:
@@ -334,6 +530,21 @@ def montar_linhas_exportacao(paginas):
     return linhas
 
 
+def montar_numero_contrato(pagina, indice_pagina, id_cadastro):
+    leilao = str(pagina.get("leilao", "") or "").strip()
+    data_atual = datetime.now().strftime("%d%m%Y")
+    return f"{id_cadastro}{data_atual}{indice_pagina:03d}_{leilao or 'CADASTRO-MAPA'}"
+
+
+def normalizar_id_cadastro(valor):
+    valor = str(valor or "").strip()
+    return valor if re.fullmatch(r"\d", valor) else "9"
+
+
+def somente_digitos(valor):
+    return re.sub(r"\D+", "", str(valor or ""))
+
+
 def obter_item(lista, indice):
     return lista[indice] if len(lista) > indice else ""
 
@@ -346,23 +557,17 @@ def worksheet_xml(linhas):
 
         for indice_coluna, valor in enumerate(linha, start=1):
             referencia = f"{nome_coluna(indice_coluna)}{indice_linha}"
-            estilo = "1" if indice_linha == 1 else ("2" if referencia.startswith("W") else "0")
+            estilo = "1" if indice_linha == 1 else ("2" if indice_coluna == 11 else "0")
             celulas_xml.append(celula_xml(referencia, valor, estilo))
 
         linhas_xml.append(f'<row r="{indice_linha}">{"".join(celulas_xml)}</row>')
 
     dimensao = f"A1:{nome_coluna(len(COLUNAS_EXPORTACAO))}{max(len(linhas), 1)}"
-    colunas = "".join(
-        f'<col min="{indice}" max="{indice}" width="{largura}" customWidth="1"/>'
-        for indice, largura in enumerate(larguras_colunas(), start=1)
-    )
 
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
     xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
     <dimension ref="{dimensao}"/>
-    <sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
-    <cols>{colunas}</cols>
     <sheetData>{"".join(linhas_xml)}</sheetData>
 </worksheet>'''
 
@@ -383,34 +588,6 @@ def nome_coluna(indice):
         nome = chr(65 + resto) + nome
 
     return nome
-
-
-def larguras_colunas():
-    return [
-        32,
-        14,
-        14,
-        28,
-        28,
-        18,
-        34,
-        10,
-        18,
-        12,
-        20,
-        8,
-        22,
-        18,
-        18,
-        18,
-        28,
-        28,
-        28,
-        42,
-        16,
-        14,
-        14,
-    ]
 
 
 def conteudo_tipos():
@@ -456,30 +633,20 @@ def styles_xml():
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <fonts count="2">
         <font><sz val="11"/><name val="Calibri"/></font>
-        <font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font>
+        <font><b/><sz val="11"/><name val="Calibri"/></font>
     </fonts>
-    <fills count="3">
+    <fills count="2">
         <fill><patternFill patternType="none"/></fill>
         <fill><patternFill patternType="gray125"/></fill>
-        <fill><patternFill patternType="solid"><fgColor rgb="FF176B87"/><bgColor indexed="64"/></patternFill></fill>
     </fills>
-    <borders count="2">
+    <borders count="1">
         <border><left/><right/><top/><bottom/><diagonal/></border>
-        <border>
-            <left style="thin"><color rgb="FFD9E2E8"/></left>
-            <right style="thin"><color rgb="FFD9E2E8"/></right>
-            <top style="thin"><color rgb="FFD9E2E8"/></top>
-            <bottom style="thin"><color rgb="FFD9E2E8"/></bottom>
-            <diagonal/>
-        </border>
     </borders>
     <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
     <cellXfs count="3">
-        <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0"/>
-        <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFill="1" applyFont="1" applyAlignment="1">
-            <alignment horizontal="center"/>
-        </xf>
-        <xf numFmtId="4" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1"/>
+        <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+        <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+        <xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
     </cellXfs>
 </styleSheet>'''
 

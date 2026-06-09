@@ -970,9 +970,6 @@ class PDFExtractor:
             notes.append("Nenhum campo chave-valor foi detectado automaticamente.")
         if not tables:
             notes.append("Nenhuma tabela estruturada foi detectada automaticamente.")
-        if buyers:
-            notes.append(f"Foram detectados {len(buyers)} compradores em formato tabular.")
-
         return {
             "engine": engine,
             "characters": characters,

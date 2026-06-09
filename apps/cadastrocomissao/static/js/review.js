@@ -164,7 +164,6 @@ function applySavedRow(rowIndex, savedRow) {
     renderCellValue(cell, field, savedRow[field] || "", savedRow);
   });
   updateLongAuctionSummary();
-  updateDuplicateSummary();
 }
 
 function applySavedRows(rows) {
@@ -191,26 +190,6 @@ function updateLongAuctionSummary() {
 
   alert.classList.remove("d-none");
   alert.textContent = `${longAuctionCells.length} linha(s) com o campo Leilao acima de 50 caracteres. Use Editar para ajustar antes de exportar.`;
-}
-
-function updateDuplicateSummary() {
-  const duplicateCells = Array.from(document.querySelectorAll("[data-field='Comprador'].duplicate-cell"));
-  const duplicateStrongCells = duplicateCells.filter((cell) => cell.classList.contains("duplicate-name-value"));
-  const alert = document.getElementById("duplicateBuyerAlert");
-  if (!alert) {
-    return;
-  }
-
-  if (duplicateCells.length === 0) {
-    alert.classList.add("d-none");
-    return;
-  }
-
-  alert.classList.remove("d-none");
-  alert.textContent = `${duplicateCells.length} linha(s) com comprador duplicado.`;
-  if (duplicateStrongCells.length > 0) {
-    alert.textContent += ` ${duplicateStrongCells.length} tambem tem o mesmo valor.`;
-  }
 }
 
 document.addEventListener("click", (event) => {

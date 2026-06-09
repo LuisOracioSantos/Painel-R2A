@@ -2,6 +2,7 @@ import re
 import unicodedata
 
 from flask import Blueprint, jsonify, render_template, request, send_file
+from flask_login import current_user
 
 from apps.comum.seguranca import acesso_aplicacao_obrigatorio
 from apps.cadastromapa.servicos import (
@@ -56,7 +57,7 @@ def exportar_excel():
     if not paginas:
         return jsonify({"erro": "Nenhuma parcela selecionada para exportacao."}), 400
 
-    arquivo = gerar_planilha_cadastro_mapa(paginas)
+    arquivo = gerar_planilha_cadastro_mapa(paginas, id_cadastro=current_user.id_cadastro)
     nome_arquivo = montar_nome_arquivo_leilao(paginas)
     return send_file(
         arquivo,

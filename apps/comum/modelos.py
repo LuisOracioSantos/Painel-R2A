@@ -32,6 +32,7 @@ class Usuario(UserMixin, db.Model):
     email = db.Column(db.String(255), nullable=False, unique=True, index=True)
     senha_hash = db.Column(db.String(255), nullable=False)
     perfil = db.Column(db.String(30), nullable=False, default="usuario", index=True)
+    id_cadastro = db.Column(db.Integer, nullable=True, unique=True, index=True)
     ativo = db.Column(db.Boolean, nullable=False, default=True, index=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     atualizado_em = db.Column(

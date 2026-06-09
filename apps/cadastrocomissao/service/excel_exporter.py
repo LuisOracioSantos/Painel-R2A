@@ -5,13 +5,12 @@ from pathlib import Path
 from uuid import uuid4
 
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font, PatternFill
-from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font, PatternFill
 
 
 class ExcelExporter:
-    HEADER_FILL = PatternFill("solid", fgColor="1F4E79")
-    HEADER_FONT = Font(color="FFFFFF", bold=True)
+    HEADER_FILL = PatternFill(fill_type=None)
+    HEADER_FONT = Font(bold=True)
     SUBTLE_FILL = PatternFill("solid", fgColor="D9EAF7")
     MISSING_FILL = PatternFill("solid", fgColor="FDE2E1")
     MISSING_FONT = Font(color="991B1B", bold=True)
@@ -67,18 +66,27 @@ class ExcelExporter:
         self.export_folder = Path(export_folder)
         self.export_folder.mkdir(parents=True, exist_ok=True)
 
-    def export(self, extraction, selection):
+    def export(self, extraction, selection, id_cadastro=None):
         workbook = Workbook()
         default_sheet = workbook.active
         workbook.remove(default_sheet)
+        self.id_cadastro = self._normalize_registration_id(id_cadastro)
 
         selected_tables_count, wrote_import_sheet = self._write_selected_tables(workbook, extraction, selection)
-        self._write_selected_fields(
-            workbook,
-            extraction,
-            selection,
-            force_fallback=selected_tables_count == 0,
-        )
+        if not wrote_import_sheet:
+            buyer_table = self._find_buyer_table(extraction)
+            if buyer_table:
+                self._write_buyers_import_sheet(workbook, buyer_table, selection.get("options", {}))
+                selected_tables_count += 1
+                wrote_import_sheet = True
+
+        if not wrote_import_sheet:
+            self._write_selected_fields(
+                workbook,
+                extraction,
+                selection,
+                force_fallback=selected_tables_count == 0,
+            )
         if not wrote_import_sheet:
             self._write_source_text(workbook, extraction)
 
@@ -134,18 +142,25 @@ class ExcelExporter:
         written_count = 0
         wrote_import_sheet = False
 
+        selected_buyer = next(
+            (
+                selected
+                for selected in selected_tables
+                if selected.get("include") and selected.get("id") == "buyers"
+            ),
+            None,
+        )
+        buyer_table = tables_by_id.get("buyers") if selected_buyer else None
+        if buyer_table:
+            self._write_buyers_import_sheet(workbook, buyer_table, selection.get("options", {}))
+            return 1, True
+
         for selected in selected_tables:
             if not selected.get("include"):
                 continue
 
             table = tables_by_id.get(selected.get("id"))
             if not table:
-                continue
-
-            if table.get("id") == "buyers":
-                self._write_buyers_import_sheet(workbook, table, selection.get("options", {}))
-                written_count += 1
-                wrote_import_sheet = True
                 continue
 
             selected_columns = [column for column in selected.get("columns", []) if column.get("include")]
@@ -178,6 +193,8 @@ class ExcelExporter:
 
         for index, row in enumerate(rows, start=1):
             sheet.append(self._build_import_row(row, index))
+
+        self._style_table(sheet, header_row=1)
 
     def _build_import_row(self, row, index):
         address = self._split_address(row)
@@ -236,7 +253,7 @@ class ExcelExporter:
         ]
 
     def _build_contract_number(self, row, index):
-        run_prefix = datetime.now().strftime("9%d%m%Y")
+        run_prefix = datetime.now().strftime(f"{self.id_cadastro}%d%m%Y")
         auction_name = self._contract_auction_name(row)
         return f"{run_prefix}{index:03d}_{auction_name}"
 
@@ -335,6 +352,10 @@ class ExcelExporter:
     def _is_blank_document(self, value):
         return self._clean_scalar(value).lower() in {"", "-", "none", "null", "pendente"}
 
+    def _normalize_registration_id(self, value):
+        value = self._clean_scalar(value)
+        return value if re.fullmatch(r"\d", value) else "9"
+
     def _list_value(self, values, index):
         return values[index] if len(values) > index else ""
 
@@ -351,30 +372,10 @@ class ExcelExporter:
             sheet.append([page.get("number", ""), page.get("text", "")])
 
         self._style_table(sheet, header_row=1)
-        sheet.column_dimensions["A"].width = 12
-        sheet.column_dimensions["B"].width = 120
-        for row in sheet.iter_rows(min_row=2):
-            row[1].alignment = Alignment(wrap_text=True, vertical="top")
 
     def _style_table(self, sheet, header_row):
-        sheet.freeze_panes = f"A{header_row + 1}"
-        sheet.auto_filter.ref = sheet.dimensions
-
         for cell in sheet[header_row]:
-            cell.fill = self.HEADER_FILL
             cell.font = self.HEADER_FONT
-            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-
-        for row in sheet.iter_rows(min_row=header_row + 1):
-            for cell in row:
-                cell.alignment = Alignment(vertical="top", wrap_text=True)
-
-        for index, column_cells in enumerate(sheet.columns, start=1):
-            max_length = 0
-            for cell in column_cells:
-                value = "" if cell.value is None else str(cell.value)
-                max_length = max(max_length, min(len(value), 80))
-            sheet.column_dimensions[get_column_letter(index)].width = max(14, min(max_length + 2, 60))
 
     def _safe_sheet_name(self, value):
         invalid_chars = ["\\", "/", "*", "[", "]", ":", "?"]
@@ -401,6 +402,9 @@ class ExcelExporter:
 
     def _is_missing_cell(self, row, column_key):
         return column_key in set(row.get("__missing_fields", []))
+
+    def _find_buyer_table(self, extraction):
+        return next((table for table in extraction.get("tables", []) if table.get("id") == "buyers"), None)
 
     def _resolve_custom_value(self, extraction, custom):
         value = (custom.get("value") or "").strip()
