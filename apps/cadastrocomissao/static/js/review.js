@@ -10,6 +10,7 @@ const editAuctionLengthAlert = document.getElementById("editAuctionLengthAlert")
 const saveBuyerRowButton = document.getElementById("saveBuyerRowButton");
 const replicateSharedFields = document.getElementById("replicateSharedFields");
 const editBuyerModal = editBuyerModalElement ? new bootstrap.Modal(editBuyerModalElement) : null;
+const AUCTION_LENGTH_LIMIT = 39;
 
 function collectBuyerSelection() {
   const buyersTable = document.querySelector("[data-table-id='buyers']");
@@ -60,7 +61,7 @@ function shouldUseTextarea(field, value) {
 function updateAuctionLengthAlert() {
   const auctionInput = editBuyerFields?.querySelector("[name='Leilao']");
   const value = auctionInput?.value || "";
-  editAuctionLengthAlert?.classList.toggle("d-none", value.length <= 50);
+  editAuctionLengthAlert?.classList.toggle("d-none", value.length <= AUCTION_LENGTH_LIMIT);
 }
 
 function createFieldControl(field, value) {
@@ -114,7 +115,7 @@ function renderCellValue(cell, field, value, rowData) {
   const duplicateStatus = field === "Comprador" ? rowData.__duplicate_status || "" : "";
   const duplicateMessage = field === "Comprador" ? rowData.__duplicate_message || "" : "";
   const isMissing = missingFields.includes(field);
-  const isLongAuction = field === "Leilao" && cleanValue.length > 50;
+  const isLongAuction = field === "Leilao" && cleanValue.length > AUCTION_LENGTH_LIMIT;
 
   cell.dataset.value = cleanValue;
   cell.classList.toggle("missing-cell", isMissing);
@@ -139,7 +140,7 @@ function renderCellValue(cell, field, value, rowData) {
       cell.appendChild(document.createElement("br"));
       const badge = document.createElement("span");
       badge.className = "length-badge";
-      badge.textContent = "Mais de 50";
+      badge.textContent = "Mais de 39";
       cell.appendChild(badge);
     } else if (duplicateStatus) {
       appendDuplicateIndicator(cell, duplicateStatus, duplicateMessage);
@@ -177,7 +178,7 @@ function applySavedRows(rows) {
 }
 
 function updateLongAuctionSummary() {
-  const longAuctionCells = Array.from(document.querySelectorAll("[data-field='Leilao']")).filter((cell) => (cell.dataset.value || "").length > 50);
+  const longAuctionCells = Array.from(document.querySelectorAll("[data-field='Leilao']")).filter((cell) => (cell.dataset.value || "").length > AUCTION_LENGTH_LIMIT);
   const alert = document.getElementById("longAuctionAlert");
   if (!alert) {
     return;
@@ -189,7 +190,7 @@ function updateLongAuctionSummary() {
   }
 
   alert.classList.remove("d-none");
-  alert.textContent = `${longAuctionCells.length} linha(s) com o campo Leilao acima de 50 caracteres. Use Editar para ajustar antes de exportar.`;
+  alert.textContent = `${longAuctionCells.length} linha(s) com o campo Leilao acima de 39 caracteres. Use Editar para ajustar antes de exportar.`;
 }
 
 document.addEventListener("click", (event) => {

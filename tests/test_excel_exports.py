@@ -342,6 +342,100 @@ def test_cadastromapa_pdf_extraction_adds_animal_to_observation():
     )
 
 
+def test_cadastromapa_observation_accepts_alphanumeric_lot():
+    texto_pdf = """
+    Nelore Gibertoni Gerações - Evoluzione - 10/05/2026
+    Cadastro de Compradores e Dados para Emissão de Nota Fiscal
+    Vendedor: Washington Dias Janota Antunes
+    Comprador: Alexandre Lima Sangali - 011.993.365-99
+    Endereço: Waldemar Falcao, 999 - Horto Florestal - Salvador - BA - CEP : 40295-010
+    E-mail: alexandre@example.com
+    Qtde
+    Lote
+    Sexo
+    Animal
+    Crias/Recep
+    Condição de Pagamento Desc %
+    Total R$
+    Total Líquido R$
+    Peso M.
+    R$/KG
+    1
+    69A
+    S
+    (50,00%)  Nelore PO
+    01+29 PARCELAS IGUAIS
+    MENSAL
+    0,00
+    150.000,00
+    150.000,00
+    0
+    R$ 0,00
+    """
+
+    pagina = extrair_dados_pagina(1, texto_pdf)
+
+    assert (
+        pagina["observacao"]
+        == "Nelore Gibertoni Gerações - Evoluzione - 10/05/2026 - "
+        "Lote: 69A - (50,00%)  Nelore PO"
+    )
+
+
+def test_cadastromapa_observation_handles_multiple_items_and_wrapped_lot():
+    texto_pdf = """
+    Tomorrow Farm - Grupo Mônica 2026 - 10/04/2026
+    Cadastro de Compradores e Dados para Emissão de Nota Fiscal
+    Vendedor: Talita Taynara Marques Gonçalves
+    Comprador: Cliente Teste - 07.589.548/0009-15
+    Endereço: Avenida 21 de Abril, 18 - Iaciara - GO - CEP : 73920-000
+    E-mail: teste@example.com
+    Qtde
+    Lote
+    Sexo
+    Animal
+    Crias/Recep
+    Condição de Pagamento Desc %
+    Total R$
+    Total Líquido R$
+    Peso M.
+    R$/KG
+    1
+    10
+    S
+    (50,00%)  Nelore PO
+    01+29 PARCELAS IGUAIS
+    MENSAL
+    0,00
+    630.000,00
+    630.000,00
+    0
+    R$ 0,00
+    1
+    MONIC
+    A
+    F
+    (50,00%)  Nelore PO LILL 2666 (47m)
+    01+29 PARCELAS IGUAIS
+    MENSAL
+    0,00
+    7.620.000,00
+    7.620.000,00
+    0
+    R$ 0,00
+    Machos
+    """
+
+    pagina = extrair_dados_pagina(1, texto_pdf)
+
+    assert (
+        pagina["observacao"]
+        == "Tomorrow Farm - Grupo Mônica 2026 - 10/04/2026 - "
+        "Lote: 10 - (50,00%)  Nelore PO; "
+        "Lote: MONICA - (50,00%)  Nelore PO LILL 2666 (47m)"
+    )
+
+
 def test_export_headers_are_bold_and_without_fill(tmp_path):
     comissao_path = ExcelExporter(tmp_path).export(
         {"metadata": {"filename": "teste.pdf", "pages": 1}, "fields": [], "tables": [], "pages": []},

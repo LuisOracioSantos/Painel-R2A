@@ -52,7 +52,7 @@
             {% set visible_headers = table.headers|reject("in", ["Tipo Documento", "CPF", "CNPJ", "Inscricao Estadual", "Codigo Estabelecimento", "Pagina", "Telefones", "Emails", "Endereco Fazenda", "Cidade Fazenda", "UF Fazenda"])|list %}
             {% set long_auction = namespace(count=0) %}
             {% for row in table.rows %}
-              {% if row.get("Leilao", "")|string|length > 50 %}
+              {% if row.get("Leilao", "")|string|length > 39 %}
                 {% set long_auction.count = long_auction.count + 1 %}
               {% endif %}
             {% endfor %}
@@ -80,7 +80,7 @@
 
             {% if long_auction.count %}
               <div class="alert alert-warning py-2 mb-3" id="longAuctionAlert">
-                {{ long_auction.count }} linha(s) com o campo Leilao acima de 50 caracteres. Use Editar para ajustar antes de exportar.
+                {{ long_auction.count }} linha(s) com o campo Leilao acima de 39 caracteres. Use Editar para ajustar antes de exportar.
               </div>
             {% else %}
               <div class="alert alert-warning py-2 mb-3 d-none" id="longAuctionAlert"></div>
@@ -106,14 +106,14 @@
                       {% for header in visible_headers %}
                         {% set value = row.get(header, "") %}
                         {% set is_missing = header in row.get("__missing_fields", []) %}
-                        {% set is_long_auction = header == "Leilao" and value|string|length > 50 %}
+                        {% set is_long_auction = header == "Leilao" and value|string|length > 39 %}
                         {% set duplicate_status = row.get("__duplicate_status", "") if header == "Comprador" else "" %}
                         <td class="small text-break {% if is_missing %}missing-cell{% elif is_long_auction %}long-cell{% elif duplicate_status == "name_value" %}duplicate-cell duplicate-name-value{% elif duplicate_status == "name" %}duplicate-cell duplicate-name{% elif not value %}empty-cell{% endif %}" data-field="{{ header }}" data-value="{{ value|e }}">
                           {% if is_missing %}
                             <span class="missing-badge">Pendente</span>
                           {% elif is_long_auction %}
                             {{ value }}
-                            <span class="length-badge">Mais de 50</span>
+                            <span class="length-badge">Mais de 39</span>
                           {% elif value %}
                             {{ value }}
                             {% if duplicate_status == "name_value" %}
@@ -177,7 +177,7 @@
       <div class="modal-body">
         <input type="hidden" id="editRowIndex">
         <div class="alert alert-warning py-2 d-none" id="editAuctionLengthAlert">
-          O campo Leilao esta acima de 50 caracteres.
+          O campo Leilao esta acima de 39 caracteres.
         </div>
         <div class="form-check form-switch replicate-switch">
           <input class="form-check-input" type="checkbox" role="switch" id="replicateSharedFields" checked>

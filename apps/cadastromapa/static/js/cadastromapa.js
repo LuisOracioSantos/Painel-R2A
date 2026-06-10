@@ -1,5 +1,5 @@
 (function () {
-    const LIMITE_LEILAO = 50;
+    const LIMITE_LEILAO = 39;
     const PADRAO_LOTE_OBSERVACAO = /Lote(?:\(s\))?:\s*\d+/i;
     const camposCadastro = [
         "leilao",

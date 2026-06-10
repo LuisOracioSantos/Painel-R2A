@@ -288,26 +288,82 @@ def extrair_lotes_animais_por_linhas(texto):
         except ValueError:
             continue
 
-        if len(linhas) <= inicio_valores + 3:
-            continue
+        itens = extrair_itens_tabela(linhas[inicio_valores:])
 
-        qtde, lote, sexo = linhas[inicio_valores : inicio_valores + 3]
-
-        if not re.fullmatch(r"\d+", qtde):
-            continue
-
-        if not re.fullmatch(r"\d{1,5}", lote):
-            continue
-
-        if not re.fullmatch(r"[A-Z]", sexo):
-            continue
-
-        animal_linhas = coletar_linhas_animal(linhas[inicio_valores + 3 :])
-        animal = formatar_descricao_animal(" ".join(animal_linhas))
-
-        return [{"lote": lote, "animal": animal}]
+        if itens:
+            return itens
 
     return []
+
+
+def extrair_itens_tabela(linhas):
+    itens = []
+    indice = 0
+
+    while indice < len(linhas):
+        item, proximo_indice = extrair_item_tabela(linhas, indice)
+
+        if item:
+            itens.append(item)
+            indice = proximo_indice
+        else:
+            indice += 1
+
+    return itens
+
+
+def extrair_item_tabela(linhas, indice):
+    if not re.fullmatch(r"\d+", linhas[indice]):
+        return None, indice
+
+    indice_lote = indice + 1
+    lote_partes = []
+
+    while indice_lote < len(linhas) and not eh_sexo_animal(linhas[indice_lote]):
+        linha = linhas[indice_lote]
+
+        if deve_parar_lote(linha) or len(lote_partes) >= 4:
+            return None, indice
+
+        lote_partes.append(linha)
+        indice_lote += 1
+
+    if not lote_partes or indice_lote >= len(linhas):
+        return None, indice
+
+    indice_animal = indice_lote + 1
+    animal_linhas = coletar_linhas_animal(linhas[indice_animal:])
+
+    if not animal_linhas:
+        return None, indice
+
+    lote = formatar_lote(lote_partes)
+    animal = formatar_descricao_animal(" ".join(animal_linhas))
+
+    return {"lote": lote, "animal": animal}, indice_animal + len(animal_linhas)
+
+
+def eh_sexo_animal(linha):
+    return normalizar_texto(linha) in {"M", "F", "S"}
+
+
+def deve_parar_lote(linha):
+    texto = normalizar_texto(linha)
+    return (
+        eh_inicio_condicao_pagamento(linha)
+        or linha.startswith("R$")
+        or texto in {"MACHOS", "FEMEAS", "TOTAL CRIAS", "SEM SEXO", "TOTAL DE ANIMAIS + CRIAS"}
+        or bool(re.fullmatch(r"\d{1,3}(?:\.\d{3})*,\d{2}", linha))
+    )
+
+
+def formatar_lote(partes):
+    partes = [parte.strip() for parte in partes if parte.strip()]
+
+    if all(re.fullmatch(r"[A-Za-z0-9]+", parte) for parte in partes):
+        return "".join(partes)
+
+    return " ".join(partes)
 
 
 def coletar_linhas_animal(linhas):
