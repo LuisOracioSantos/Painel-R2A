@@ -156,16 +156,16 @@ def test_cadastrocomissao_export_has_expected_columns_and_values(tmp_path):
     assert sheet.max_row == 2
     assert row["CPF/CNPJ"] == "123.456.789-00"
     assert row["NOME / RAZÃO SOCIAL"] == "Cliente Comissao"
-    assert row["NÚMERO CONTRATO"] == f"4{datetime.now().strftime('%d%m%Y')}001_Teste-09/06/2026"
+    assert row["NÚMERO CONTRATO"] == f"4{datetime.now().strftime('%d%m%y')}001_Teste-09/06/2026"
     assert row["DATA CONTRATO"] == "09/06/2026"
     assert row["TIPO DE PRODUTO"] == "Duplicata"
     assert row["OBSERVAÇÃO  CONTRATO"] == "Comissao de compra - Teste"
     assert row["PARCELA"] == 1
     assert row["VENCIMENTO"] == "24/06/2026"
     assert row["VALOR"] == "1234,5"
-    assert row["TEL. RESIDENCIAL 1"] == "(11) 99999-9999"
-    assert row["TEL. RESIDENCIAL 2"] == "(11) 3333-4444"
-    assert row["TEL. CELULAR 1"] == "(11) 88888-7777"
+    assert row["TEL. RESIDENCIAL 1"] == "1199999-9999"
+    assert row["TEL. RESIDENCIAL 2"] == "113333-4444"
+    assert row["TEL. CELULAR 1"] == "1188888-7777"
     assert row["EMAIL 1"] == "cliente@example.com"
     assert row["EMAIL 2"] == "financeiro@example.com"
     assert row["EMAIL 3"] == "extra@example.com"
@@ -233,7 +233,7 @@ def test_cadastrocomissao_contract_uses_9_when_registration_id_is_missing(tmp_pa
     )
     row = values_by_header(load_workbook(output_path)["Sheet1"], 2)
 
-    assert row["NÚMERO CONTRATO"].startswith(f"9{datetime.now().strftime('%d%m%Y')}001_")
+    assert row["NÚMERO CONTRATO"].startswith(f"9{datetime.now().strftime('%d%m%y')}001_")
 
 
 def test_cadastromapa_export_has_expected_columns_values_and_one_row_per_installment(tmp_path):
@@ -273,16 +273,16 @@ def test_cadastromapa_export_has_expected_columns_values_and_one_row_per_install
     assert sheet.max_row == 3
     assert first_row["CPF/CNPJ"] == "12.345.678/0001-99"
     assert first_row["NOME / RAZÃO SOCIAL"] == "Cliente Mapa"
-    assert first_row["NÚMERO CONTRATO"] == f"7{datetime.now().strftime('%d%m%Y')}001_Leilao Mapa - 09/06/2026"
+    assert first_row["NÚMERO CONTRATO"] == f"7{datetime.now().strftime('%d%m%y')}001_Leilao Mapa - 09/06/2026"
     assert first_row["DATA CONTRATO"] == "09/06/2026"
     assert first_row["TIPO DE PRODUTO"] == "Duplicata"
     assert first_row["OBSERVAÇÃO  CONTRATO"] == "Leilao Mapa - Lote(s): 10"
     assert first_row["PARCELA"] == 1
     assert first_row["VENCIMENTO"] == "20/06/2026"
     assert first_row["VALOR"] == 1500.75
-    assert first_row["TEL. RESIDENCIAL 1"] == "(16) 99999-0000"
-    assert first_row["TEL. RESIDENCIAL 2"] == "(16) 3333-2222"
-    assert first_row["TEL. CELULAR 1"] == "(16) 98888-7777"
+    assert first_row["TEL. RESIDENCIAL 1"] == "1699999-0000"
+    assert first_row["TEL. RESIDENCIAL 2"] == "163333-2222"
+    assert first_row["TEL. CELULAR 1"] == "1698888-7777"
     assert first_row["EMAIL 1"] == "mapa@example.com"
     assert first_row["EMAIL 2"] == "boleto@example.com"
     assert first_row["EMAIL 3"] == "extra@example.com"

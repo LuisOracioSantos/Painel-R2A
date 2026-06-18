@@ -539,11 +539,11 @@ def montar_linhas_exportacao(paginas, id_cadastro=None):
             "tipoproduto": pagina.get("produto", ""),
             "observacaocontrato": pagina.get("observacao", ""),
             "observacaoparcela": "",
-            "telresidencial1": obter_item(telefones, 0),
-            "telresidencial2": obter_item(telefones, 1),
+            "telresidencial1": formatar_telefone_exportacao(obter_item(telefones, 0)),
+            "telresidencial2": formatar_telefone_exportacao(obter_item(telefones, 1)),
             "telcomercial1": "",
             "telcomercial2": "",
-            "telcelular1": obter_item(telefones, 2),
+            "telcelular1": formatar_telefone_exportacao(obter_item(telefones, 2)),
             "telcelular2": "",
             "telreferencia1": "",
             "obstelreferencia1": "",
@@ -588,7 +588,7 @@ def montar_linhas_exportacao(paginas, id_cadastro=None):
 
 def montar_numero_contrato(pagina, indice_pagina, id_cadastro):
     leilao = str(pagina.get("leilao", "") or "").strip()
-    data_atual = datetime.now().strftime("%d%m%Y")
+    data_atual = datetime.now().strftime("%d%m%y")
     return f"{id_cadastro}{data_atual}{indice_pagina:03d}_{leilao or 'CADASTRO-MAPA'}"
 
 
@@ -599,6 +599,10 @@ def normalizar_id_cadastro(valor):
 
 def somente_digitos(valor):
     return re.sub(r"\D+", "", str(valor or ""))
+
+
+def formatar_telefone_exportacao(valor):
+    return re.sub(r"^\s*\((\d{2})\)\s*", r"\1", str(valor or ""))
 
 
 def obter_item(lista, indice):

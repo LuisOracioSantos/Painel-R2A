@@ -217,11 +217,11 @@ class ExcelExporter:
             self._export_due_date(row),
             self._normalize_money(row.get("Valor", "")),
             "",
-            self._list_value(phones, 0),
-            self._list_value(phones, 1),
+            self._phone_value(phones, 0),
+            self._phone_value(phones, 1),
             "",
             "",
-            self._list_value(phones, 2),
+            self._phone_value(phones, 2),
             "",
             "",
             "",
@@ -253,7 +253,7 @@ class ExcelExporter:
         ]
 
     def _build_contract_number(self, row, index):
-        run_prefix = datetime.now().strftime(f"{self.id_cadastro}%d%m%Y")
+        run_prefix = datetime.now().strftime(f"{self.id_cadastro}%d%m%y")
         auction_name = self._contract_auction_name(row)
         return f"{run_prefix}{index:03d}_{auction_name}"
 
@@ -358,6 +358,9 @@ class ExcelExporter:
 
     def _list_value(self, values, index):
         return values[index] if len(values) > index else ""
+
+    def _phone_value(self, values, index):
+        return re.sub(r"^\s*\((\d{2})\)\s*", r"\1", self._list_value(values, index))
 
     def _clean_scalar(self, value):
         value = "" if value is None else str(value)
